@@ -1,0 +1,237 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+	Version="10.0"
+	VendorName="SlickEdit"
+	TemplateName="Other C/C++"
+	WorkingDir=".">
+	<Config
+		Name="Debug"
+		Type="cpp"
+		DebugCallbackName="gdb"
+		OutputFile="%bdBAv01"
+		CompilerConfigName="Latest Version">
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				OutputExts="*.o"
+				SaveOption="SaveCurrent"
+				RunFromDir="%rw">
+				<Exec CmdLine='cc -c -g %i %defd -o "%bd%n.o" "%f"'/>
+			</Target>
+			<Target
+				Name="Link"
+				MenuCaption="&amp;Link">
+				<Exec CmdLine='cc -g -o "%o" %f %libs'/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine='"%(VSLICKBIN1)vsbuild" build "%w" "%r"'/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine='"%(VSLICKBIN1)vsbuild" rebuild "%w" "%r"'/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				BuildFirst="1"
+				CaptureOutputWith="ProcessBuffer"
+				RunFromDir="%rw">
+				<Exec CmdLine='vsdebugio -prog "%o"'/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				BuildFirst="1"
+				CaptureOutputWith="ProcessBuffer"
+				RunFromDir="%rw">
+				<Exec CmdLine='"%o"'/>
+			</Target>
+		</Menu>
+	</Config>
+	<Config
+		Name="Release"
+		Type="cpp"
+		DebugCallbackName="gdb"
+		OutputFile="%bdBAv01"
+		CompilerConfigName="Latest Version">
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveCurrent"
+				OutputExts="*.o"
+				RunFromDir="%rw">
+				<Exec CmdLine='cc -c -O %i %defd -o "%bd%n.o" "%f"'/>
+			</Target>
+			<Target
+				Name="Link"
+				MenuCaption="&amp;Link">
+				<Exec CmdLine='cc -O -o "%o" %f %libs'/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine='"%(VSLICKBIN1)vsbuild" build "%w" "%r"'/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine='"%(VSLICKBIN1)vsbuild" rebuild "%w" "%r"'/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				BuildFirst="1"
+				CaptureOutputWith="ProcessBuffer"
+				RunFromDir="%rw">
+				<Exec CmdLine='vsdebugio -prog "%o"'/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				BuildFirst="1"
+				CaptureOutputWith="ProcessBuffer"
+				RunFromDir="%rw">
+				<Exec CmdLine='"%o"'/>
+			</Target>
+		</Menu>
+	</Config>
+	<Rules Name="Compile">
+		<Rule
+			InputExts="*.s"
+			OutputExts="*.o"
+			LinkObject="1">
+			<Exec CmdLine='as -o "%bd%n.o" "%f"'/>
+		</Rule>
+	</Rules>
+	<CustomFolders>
+		<Folder
+			Name="Source Files"
+			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm">
+		</Folder>
+		<Folder
+			Name="Header Files"
+			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
+		</Folder>
+		<Folder
+			Name="Resource Files"
+			Filters="*.ico;*.cur;*.dlg"/>
+		<Folder
+			Name="Bitmaps"
+			Filters="*.bmp"/>
+		<Folder
+			Name="Other Files"
+			Filters="">
+		</Folder>
+	</CustomFolders>
+	<Files AutoFolders="DirectoryView">
+		<Folder Name="Lib">
+			<Folder Name="inc">
+				<F N="Lib/inc/misc.h"/>
+				<F N="Lib/inc/stm32f10x_adc.h"/>
+				<F N="Lib/inc/stm32f10x_bkp.h"/>
+				<F N="Lib/inc/stm32f10x_can.h"/>
+				<F N="Lib/inc/stm32f10x_cec.h"/>
+				<F N="Lib/inc/stm32f10x_crc.h"/>
+				<F N="Lib/inc/stm32f10x_dac.h"/>
+				<F N="Lib/inc/stm32f10x_dbgmcu.h"/>
+				<F N="Lib/inc/stm32f10x_dma.h"/>
+				<F N="Lib/inc/stm32f10x_exti.h"/>
+				<F N="Lib/inc/stm32f10x_flash.h"/>
+				<F N="Lib/inc/stm32f10x_fsmc.h"/>
+				<F N="Lib/inc/stm32f10x_gpio.h"/>
+				<F N="Lib/inc/stm32f10x_i2c.h"/>
+				<F N="Lib/inc/stm32f10x_iwdg.h"/>
+				<F N="Lib/inc/stm32f10x_pwr.h"/>
+				<F N="Lib/inc/stm32f10x_rcc.h"/>
+				<F N="Lib/inc/stm32f10x_rtc.h"/>
+				<F N="Lib/inc/stm32f10x_sdio.h"/>
+				<F N="Lib/inc/stm32f10x_spi.h"/>
+				<F N="Lib/inc/stm32f10x_tim.h"/>
+				<F N="Lib/inc/stm32f10x_usart.h"/>
+				<F N="Lib/inc/stm32f10x_wwdg.h"/>
+			</Folder>
+			<Folder Name="src">
+				<F N="Lib/src/misc.c"/>
+				<F N="Lib/src/stm32f10x_adc.c"/>
+				<F N="Lib/src/stm32f10x_bkp.c"/>
+				<F N="Lib/src/stm32f10x_can.c"/>
+				<F N="Lib/src/stm32f10x_cec.c"/>
+				<F N="Lib/src/stm32f10x_crc.c"/>
+				<F N="Lib/src/stm32f10x_dac.c"/>
+				<F N="Lib/src/stm32f10x_dbgmcu.c"/>
+				<F N="Lib/src/stm32f10x_dma.c"/>
+				<F N="Lib/src/stm32f10x_exti.c"/>
+				<F N="Lib/src/stm32f10x_flash.c"/>
+				<F N="Lib/src/stm32f10x_fsmc.c"/>
+				<F N="Lib/src/stm32f10x_gpio.c"/>
+				<F N="Lib/src/stm32f10x_i2c.c"/>
+				<F N="Lib/src/stm32f10x_iwdg.c"/>
+				<F N="Lib/src/stm32f10x_pwr.c"/>
+				<F N="Lib/src/stm32f10x_rcc.c"/>
+				<F N="Lib/src/stm32f10x_rtc.c"/>
+				<F N="Lib/src/stm32f10x_sdio.c"/>
+				<F N="Lib/src/stm32f10x_spi.c"/>
+				<F N="Lib/src/stm32f10x_tim.c"/>
+				<F N="Lib/src/stm32f10x_usart.c"/>
+				<F N="Lib/src/stm32f10x_wwdg.c"/>
+			</Folder>
+		</Folder>
+		<Folder Name="Startup">
+			<F N="Startup/startup_stm32f10x_md_arm.s"/>
+		</Folder>
+		<Folder Name="System">
+			<Folder Name="inc">
+				<F N="System/inc/core_cm3.h"/>
+				<F N="System/inc/stm32f10x.h"/>
+				<F N="System/inc/stm32f10x_conf.h"/>
+				<F N="System/inc/system_stm32f10x.h"/>
+			</Folder>
+			<Folder Name="src">
+				<F N="System/src/core_cm3.c"/>
+				<F N="System/src/system_stm32f10x.c"/>
+			</Folder>
+		</Folder>
+		<Folder Name="User">
+			<Folder Name="inc">
+				<F N="User/inc/Draw.h"/>
+				<F N="User/inc/GlobalVAR.h"/>
+				<F N="User/inc/main.h"/>
+				<F N="User/inc/Motion.h"/>
+				<F N="User/inc/PicFlash.h"/>
+				<F N="User/inc/stm32f10x_it.h"/>
+				<F N="User/inc/USB.h"/>
+			</Folder>
+			<Folder Name="src">
+				<F N="User/src/Draw.c"/>
+				<F N="User/src/main.c"/>
+				<F N="User/src/Motion.c"/>
+				<F N="User/src/stm32f10x_it.c"/>
+				<F N="User/src/USB.c"/>
+			</Folder>
+			<F N="User/BAv01sct.sct"/>
+		</Folder>
+	</Files>
+</Project>
