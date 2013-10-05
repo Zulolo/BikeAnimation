@@ -82,5 +82,6 @@ __GVAR EXTI_InitTypeDef   gEXTI_InitStructure;
 
 #define GET_GLOBAL_FREERUN_US   				TIM_GetCounter(GLB_FREERUN_TIMER)
 #define GLOBAL_FREERUN_US_WAITING(iStart, iMax)	(((uint16_t)((GET_GLOBAL_FREERUN_US) - (iStart))) < (iMax))		
+#define GLOBAL_FREERUN_US_TIMEOUT(iStart, iMax)	(((uint16_t)((GET_GLOBAL_FREERUN_US) - (iStart))) > (iMax))
 
 #endif

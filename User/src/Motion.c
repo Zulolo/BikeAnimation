@@ -66,19 +66,34 @@ void ACCE_MasterConfiguration(void)
 	//DMA_Cmd(ACCE_MASTER_DMA_TX_CHN, ENABLE);
 }
 
-ENUM_OperationResult AcceRX_DMAInitial(uint8_t iBUFLength, uint8_t* pRecvContainer)
+ENUM_OperationResult AcceReadRX_DMAInitial(uint8_t iBUFLength, uint8_t* pRecvContainer)
 {
 	DMA_Cmd(ACCE_MASTER_DMA_RX_CHN, DISABLE);
+	DMA_ITConfig(ACCE_MASTER_DMA_RX_CHN, DMA_IT_TC, DISABLE);
 	staAcceMasterRX_DMAInitStructure.DMA_MemoryBaseAddr = (uint32_t)pRecvContainer;
 	staAcceMasterRX_DMAInitStructure.DMA_BufferSize = iBUFLength;
 	DMA_Init(ACCE_MASTER_DMA_RX_CHN, &staAcceMasterRX_DMAInitStructure);
 	return ACCEPTED;
 }
 
-ENUM_OperationResult AcceTX_DMAInitial(uint8_t iRegAddress, uint8_t iBUFLength, ENUM_AcceCommuType bWriteOrRead)
+ENUM_OperationResult AcceReadTX_DMAInitial(uint8_t iRegAddress, uint8_t iBUFLength)
 {
 	DMA_Cmd(ACCE_MASTER_DMA_TX_CHN, DISABLE);
-	staAcceTXBUF[0] = iRegAddress | GET_ACCE_CTRL_TYPE_MSB(bWriteOrRead);
+	DMA_ITConfig(ACCE_MASTER_DMA_TX_CHN, DMA_IT_TC, DISABLE);
+	staAcceTXBUF[0] = iRegAddress | MSB_MASK_8BIT;
+	staAcceMasterRX_DMAInitStructure.DMA_MemoryBaseAddr = (uint32_t)staAcceTXBUF;
+	staAcceMasterTX_DMAInitStructure.DMA_BufferSize = iBUFLength;
+	DMA_Init(ACCE_MASTER_DMA_TX_CHN, &staAcceMasterTX_DMAInitStructure);
+	return ACCEPTED;
+}
+
+ENUM_OperationResult AcceWriteTX_DMAInitial(uint8_t* pTXBuffer, uint8_t iBUFLength)
+{
+	DMA_Cmd(ACCE_MASTER_DMA_TX_CHN, DISABLE);
+	DMA_Cmd(ACCE_MASTER_DMA_RX_CHN, DISABLE);
+	DMA_ITConfig(ACCE_MASTER_DMA_TX_CHN, DMA_IT_TC, DISABLE);
+	DMA_ITConfig(ACCE_MASTER_DMA_RX_CHN, DMA_IT_TC, DISABLE);
+	staAcceMasterRX_DMAInitStructure.DMA_MemoryBaseAddr = (uint32_t)pTXBuffer;
 	staAcceMasterTX_DMAInitStructure.DMA_BufferSize = iBUFLength;
 	DMA_Init(ACCE_MASTER_DMA_TX_CHN, &staAcceMasterTX_DMAInitStructure);
 	return ACCEPTED;
@@ -86,8 +101,8 @@ ENUM_OperationResult AcceTX_DMAInitial(uint8_t iRegAddress, uint8_t iBUFLength, 
 
 ENUM_OperationResult AcceRead(uint8_t iRegAddress, uint8_t iReadLength, uint8_t* pRecvContainer)
 {
-	AcceRX_DMAInitial(iReadLength + 1, pRecvContainer);
-	AcceTX_DMAInitial(iRegAddress, iReadLength + 1, ACCE_CTRL_RD);
+	AcceReadRX_DMAInitial(iReadLength + 1, pRecvContainer);
+	AcceReadTX_DMAInitial(iRegAddress, iReadLength + 1);
 	DMA_ITConfig(ACCE_MASTER_DMA_RX_CHN, DMA_IT_TC, ENABLE);
 	ACCE_MASTER_NSS_ENABLE;
 	FLAG_MOTION_ACCE_COMMU_BUSY = SET;
@@ -96,9 +111,9 @@ ENUM_OperationResult AcceRead(uint8_t iRegAddress, uint8_t iReadLength, uint8_t*
 	return ACCEPTED;
 }
 
-ENUM_OperationResult AcceWrite(uint8_t iRegAddress, uint8_t iWriteLength)
+ENUM_OperationResult AcceWrite(uint8_t* pTXBuffer, uint8_t iWriteLength)
 {	
-	AcceTX_DMAInitial(iRegAddress, iWriteLength + 1, ACCE_CTRL_WR);
+	AcceWriteTX_DMAInitial(pTXBuffer, iWriteLength);
 	DMA_ITConfig(ACCE_MASTER_DMA_TX_CHN, DMA_IT_TC, ENABLE);
 	ACCE_MASTER_NSS_ENABLE;
 	FLAG_MOTION_ACCE_COMMU_BUSY = SET;
@@ -204,7 +219,8 @@ ENUM_OperationResult AcceMasterBlastTX_Const(const uint8_t* pFormattedCMDStream,
 		{
 			return REFUSED;
 		}
-		pTempAvailableQueueSlot->typeAcceMasterCommuType = ACCE_CTRL_WR;
+		pTempAvailableQueueSlot->pRXBuf = NULL;
+		pTempAvailableQueueSlot->bCommuSuccess = FALSE;
 		pTempAvailableQueueSlot->pTXBuf = (uint8_t *)(pFormattedCMDStream + iTempIndex + 1);
 		pTempAvailableQueueSlot->iTXBufLen = *(pFormattedCMDStream + iTempIndex) - 1;
 		iTempIndex += *(pFormattedCMDStream + iTempIndex);
@@ -273,7 +289,18 @@ void MotionManager(void)
 		break;
 
 	case MOTION_STATE_TRIGGER_TX:
-
+		while (FLAG_MOTION_ACCE_COMMU_BUSY && GLOBAL_FREERUN_US_WAITING(staAcceCommuBusyWaitTime, ACCE_COMMU_BUSY_WAIT_MAX_US))	
+		{	// Normally FLAG_MOTION_ACCE_COMMU_BUSY will only be busy in MOTION_STATE_TXING or MOTION_STATE_RXING state
+		}
+		if (FLAG_MOTION_ACCE_COMMU_BUSY)
+		{
+			FLAG_MOTION_ACCE_COMMU_BUSY = RESET; // Force reset of FLAG_MOTION_ACCE_COMMU_BUSY
+			staAcceCommuErrorCNT++;
+		}
+		AcceWrite(staAcceCommuQueue[staAcceCommuIndex].pTXBuf, 
+				 staAcceCommuQueue[staAcceCommuIndex].iTXBufLen);
+		staAcceCommuBusyWaitTime = GET_GLOBAL_FREERUN_US;
+		staMotionDetectState = MOTION_STATE_TXING;
 		break;
 
 	case MOTION_STATE_TXING:
@@ -284,9 +311,30 @@ void MotionManager(void)
 		while (FLAG_MOTION_ACCE_COMMU_BUSY && GLOBAL_FREERUN_US_WAITING(staAcceCommuBusyWaitTime, ACCE_COMMU_BUSY_WAIT_MAX_US))	
 		{	// Normally FLAG_MOTION_ACCE_COMMU_BUSY will only be busy in MOTION_STATE_TXING or MOTION_STATE_RXING state
 		}
+		if (FLAG_MOTION_ACCE_COMMU_BUSY)
+		{
+			FLAG_MOTION_ACCE_COMMU_BUSY = RESET; // Force reset of FLAG_MOTION_ACCE_COMMU_BUSY
+			staAcceCommuErrorCNT++;
+		}
+		AcceRead(staAcceCommuQueue[staAcceCommuIndex].iRXAddress, 
+				 staAcceCommuQueue[staAcceCommuIndex].iRXBufLen - 1,
+				 staAcceCommuQueue[staAcceCommuIndex].pRXBuf);
+		staAcceCommuBusyWaitTime = GET_GLOBAL_FREERUN_US;
+		staMotionDetectState = MOTION_STATE_RXING;
 		break;
 
 	case MOTION_STATE_RXING:
+		if (RESET == FLAG_MOTION_ACCE_COMMU_BUSY)
+		{
+			staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess = TRUE;
+			staMotionDetectState = MOTION_STATE_DATA_PROCCESS;
+		}
+		else if (GLOBAL_FREERUN_US_TIMEOUT(staAcceCommuBusyWaitTime, ACCE_COMMU_TIMEOUT_US))
+		{
+			staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess = FALSE;
+			staAcceCommuErrorCNT++;
+			staMotionDetectState = MOTION_STATE_DATA_PROCCESS;
+		}
 
 		break;
 
