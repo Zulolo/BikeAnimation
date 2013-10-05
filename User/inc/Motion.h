@@ -21,6 +21,7 @@
 	#define ACCE_COMMU_QUEUE_LEN			16
 	#define ACCE_COMMU_BUSY_WAIT_MAX_US		20
 	#define ACCE_COMMU_TIMEOUT_US			50
+	#define ACCE_QUEUE_ROAMER_FORWARD		((staAcceCommuIndex < (ACCE_COMMU_QUEUE_LEN - 1)) ? (staAcceCommuIndex++) : (staAcceCommuIndex = 0))
 
 	typedef enum {ACCE_CTRL_WR = 0, ACCE_CTRL_RD = !ACCE_CTRL_WR} ENUM_AcceCommuType;
 
@@ -34,7 +35,7 @@
 		MOTION_STATE_TXING,
 		MOTION_STATE_TRIGGER_RX,
 		MOTION_STATE_RXING,
-		MOTION_STATE_DATA_PROCCESS
+		MOTION_STATE_RX_DATA_PROCCESS
 	} ENUM_MotionDetectState;
 
 	typedef struct
@@ -57,9 +58,7 @@
 	static uint32_t staAcceCommuErrorCNT = 0;
 
 	const uint8_t BMA020_CONFIG_PARA[] = {
-		6, 0x00, 0x01, 0x02, 0x03, 0x04,
-		3, 0x05, 0x12,
-		4, 0x04, 0x17, 0x28
+		3, 0x14, 0x12 // +-8g, 100Hz
 	};
 #endif 
 

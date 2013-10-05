@@ -304,7 +304,19 @@ void MotionManager(void)
 		break;
 
 	case MOTION_STATE_TXING:
-
+		if (RESET == FLAG_MOTION_ACCE_COMMU_BUSY)
+		{
+			AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
+			ACCE_QUEUE_ROAMER_FORWARD;
+			staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+		}
+		else if (GLOBAL_FREERUN_US_TIMEOUT(staAcceCommuBusyWaitTime, ACCE_COMMU_TIMEOUT_US))
+		{
+			AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
+			ACCE_QUEUE_ROAMER_FORWARD;
+			staAcceCommuErrorCNT++;
+			staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+		}
 		break;
 
 	case MOTION_STATE_TRIGGER_RX:
@@ -327,19 +339,29 @@ void MotionManager(void)
 		if (RESET == FLAG_MOTION_ACCE_COMMU_BUSY)
 		{
 			staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess = TRUE;
-			staMotionDetectState = MOTION_STATE_DATA_PROCCESS;
+			staMotionDetectState = MOTION_STATE_RX_DATA_PROCCESS;
 		}
 		else if (GLOBAL_FREERUN_US_TIMEOUT(staAcceCommuBusyWaitTime, ACCE_COMMU_TIMEOUT_US))
 		{
 			staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess = FALSE;
 			staAcceCommuErrorCNT++;
-			staMotionDetectState = MOTION_STATE_DATA_PROCCESS;
+			staMotionDetectState = MOTION_STATE_RX_DATA_PROCCESS;
 		}
 
 		break;
 
-	case MOTION_STATE_DATA_PROCCESS:
+	case MOTION_STATE_RX_DATA_PROCCESS:
+		if (TRUE == staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess)
+		{
 
+		}
+		else
+		{
+			
+		}
+		AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
+		ACCE_QUEUE_ROAMER_FORWARD;
+		staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
 		break;
 
 		default :
