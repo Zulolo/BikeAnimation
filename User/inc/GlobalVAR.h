@@ -34,9 +34,10 @@
 #define ACCE_MASTER_DMA_RX_IRQHandler	  	DMA1_Channel2_IRQHandler
 #define ACCE_MASTER_DMA_RX_IT_TC		    DMA1_IT_TC2
 #define ACCE_MASTER_DMA_RX_CHN			    DMA1_Channel2	// SPI1_RX DMA
-#define PIC_REFRESH_TIMER_IRQn			    TIM2_IRQn
-#define SIG_GEN_TIMER 				        TIM1
-#define PIC_REFRESH_TIMER 				    TIM2
+#define ACCE_MONITER_TIMER_IRQn				TIM2_IRQn
+#define PIC_REFRESH_TIMER_IRQn			    TIM4_IRQn
+#define ACCE_MONITER_TIMER 				    TIM2
+#define PIC_REFRESH_TIMER 				    TIM4
 #define GLB_FREERUN_TIMER 				    TIM3    // Without interrupt, evryone need to use this, divided into 1us per CNT
 
 #define LSB_MASK_8BIT					    0x01

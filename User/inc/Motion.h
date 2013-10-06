@@ -22,6 +22,10 @@
 	#define ACCE_COMMU_BUSY_WAIT_MAX_US		20
 	#define ACCE_COMMU_TIMEOUT_US			50
 	#define ACCE_QUEUE_ROAMER_FORWARD		((staAcceCommuIndex < (ACCE_COMMU_QUEUE_LEN - 1)) ? (staAcceCommuIndex++) : (staAcceCommuIndex = 0))
+	#define ACCE_MONITOR_TIMER_PRESCAL		((SYSCLK_FREQ_72MHz / 1000000) - 1)		// Freerun TIM's frequency is at 1MHz (1us)
+	#define ACCE_MONITOR_TIMER_PERIOD		99	// 100us repeat
+	#define ACCE_ROUTINE_DATA_READ_ADDR		0x02
+	#define ACCE_ROUTINE_DATA_READ_LEN		6
 
 	typedef enum {ACCE_CTRL_WR = 0, ACCE_CTRL_RD = !ACCE_CTRL_WR} ENUM_AcceCommuType;
 

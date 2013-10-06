@@ -127,6 +127,23 @@ void SysTick_Handler(void)
 /*  file (startup_stm32f10x_xx.s).                                            */
 /******************************************************************************/
 
+void ACCE_MONITER_TIMER_IRQ_HANDLER(void)
+{
+	if (TIM_GetITStatus(ACCE_MONITER_TIMER, TIM_IT_Update) != RESET)
+	{
+		TIM_ClearITPendingBit(ACCE_MONITER_TIMER, TIM_IT_Update); 
+		MTN_NewRoutineDataReadRequest();
+	}
+}
+
+void PIC_REFRESH_TIMER_IRQ_HANDLER(void)
+{
+	if (TIM_GetITStatus(PIC_REFRESH_TIMER, TIM_IT_Update) != RESET)
+	{
+		TIM_ClearITPendingBit(PIC_REFRESH_TIMER, TIM_IT_Update); 
+	}
+}
+
 void ACCE_MASTER_DMA_TX_IRQHandler(void)
 {
 	uint16_t iTempSPIBusyWait = 0;

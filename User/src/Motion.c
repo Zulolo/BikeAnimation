@@ -4,6 +4,20 @@
 void ACCE_MasterConfiguration(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure
+
+    /* Time Base configuration */
+	TIM_Cmd(ACCE_MONITER_TIMER, DISABLE);
+	TIM_ITConfig(ACCE_MONITER_TIMER, TIM_IT_Update, DISABLE);
+
+    TIM_TimeBaseStructure.TIM_Prescaler = ACCE_MONITER_TIMER_PRESCAL;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseStructure.TIM_Period = ACCE_MONITER_TIMER_PERIOD;
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+
+    TIM_TimeBaseInit(ACCE_MONITER_TIMER, &TIM_TimeBaseStructure);
+	// Enable timer to start routine acce data read after device config
 
 	/* LCD_SPI_MASTER configuration ------------------------------------------------------*/
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;	// Only TX
@@ -62,6 +76,7 @@ void ACCE_MasterConfiguration(void)
 	SPI_I2S_DMACmd(ACCE_MASTER_SPI, SPI_I2S_DMAReq_Tx, ENABLE);
 	SPI_I2S_DMACmd(ACCE_MASTER_SPI, SPI_I2S_DMAReq_Rx, ENABLE);
 
+	
 	/* Enable DMA1 Channel3 */
 	//DMA_Cmd(ACCE_MASTER_DMA_TX_CHN, ENABLE);
 }
@@ -239,7 +254,35 @@ void AcceDeviceConfig(void)
 	}
 */
 	AcceMasterBlastTX_Const(BMA020_CONFIG_PARA, sizeof(BMA020_CONFIG_PARA));
+	// Enable timer to start routine acce data read after device config
+	TIM_Cmd(ACCE_MONITER_TIMER, ENABLE);
+	TIM_ITConfig(ACCE_MONITER_TIMER, TIM_IT_Update, ENABLE);
 	staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+}
+
+ENUM_OperationResult MTN_NewRoutineDataReadRequest(void)
+{
+	uint8_t* pRecvContainer = NULL;
+	STR_AcceCommu* pTempAvailableQueueSlot = NULL;
+
+	pTempAvailableQueueSlot = AcceQueueSlotSearch(staAcceCommuQueue, sizeof(staAcceCommuQueue), staAcceCommuIndex);
+	if (NULL == pTempAvailableQueueSlot)
+	{
+		return REFUSED;
+	}
+	// Get pRecvContainer second to avoid free the allocated space
+	pRecvContainer = malloc(ACCE_ROUTINE_DATA_READ_LEN + 1);
+	if (NULL == pRevcContainer)
+	{
+		return REFUSED;
+	}
+	pTempAvailableQueueSlot->pRXBuf = pRecvContainer;
+	pTempAvailableQueueSlot->bCommuSuccess = FALSE;
+	pTempAvailableQueueSlot->pTXBuf = NULL;
+	pTempAvailableQueueSlot->iRXAddress = ACCE_ROUTINE_DATA_READ_ADDR;
+	pTempAvailableQueueSlot->iRXBufLen = ACCE_ROUTINE_DATA_READ_LEN + 1;
+
+	return ACCEPTED
 }
 
 void MotionManager(void)
