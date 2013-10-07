@@ -23,12 +23,13 @@ Section Cross References
     startup_stm32f10x_md_arm.o(.text) refers to system_stm32f10x.o(.text) for SystemInit
     startup_stm32f10x_md_arm.o(.text) refers to entry.o(.ARM.Collect$$$$00000000) for __main
     system_stm32f10x.o(.text) refers to system_stm32f10x.o(.data) for SystemCoreClock
+    motion.o(.text) refers to stm32f10x_tim.o(.text) for TIM_Cmd
     motion.o(.text) refers to stm32f10x_spi.o(.text) for SPI_Init
     motion.o(.text) refers to stm32f10x_dma.o(.text) for DMA_DeInit
     motion.o(.text) refers to stm32f10x_gpio.o(.text) for GPIO_ResetBits
     motion.o(.text) refers to malloc2.o(i.__free$2region) for free
     motion.o(.text) refers to memseta.o(.text) for __aeabi_memclr4
-    motion.o(.text) refers to stm32f10x_tim.o(.text) for TIM_GetCounter
+    motion.o(.text) refers to malloc2.o(i.__malloc$2region) for malloc
     motion.o(.text) refers to motion.o(.bss) for staAcceMasterTX_DMAInitStructure
     motion.o(.text) refers to main.o(.data) for iFlagMotionGeneralG01
     motion.o(.text) refers to motion.o(.data) for staAcceCommuIndex
@@ -44,9 +45,10 @@ Section Cross References
     main.o(.text) refers to draw.o(.text) for RedrawManager
     main.o(.text) refers to system_stm32f10x.o(.data) for SystemCoreClock
     main.o(.text) refers to main.o(.data) for gSystem_1ms_CNT
+    stm32f10x_it.o(.text) refers to stm32f10x_tim.o(.text) for TIM_GetITStatus
+    stm32f10x_it.o(.text) refers to motion.o(.text) for MTN_NewRoutineDataReadRequest
     stm32f10x_it.o(.text) refers to stm32f10x_dma.o(.text) for DMA_GetITStatus
     stm32f10x_it.o(.text) refers to stm32f10x_gpio.o(.text) for GPIO_SetBits
-    stm32f10x_it.o(.text) refers to stm32f10x_tim.o(.text) for TIM_GetITStatus
     stm32f10x_it.o(.text) refers to main.o(.data) for gSystem_1ms_CNT
     entry.o(.ARM.Collect$$$$00000000) refers (Special) to entry10a.o(.ARM.Collect$$$$0000000D) for __rt_final_cpp
     entry.o(.ARM.Collect$$$$00000000) refers (Special) to entry11a.o(.ARM.Collect$$$$0000000F) for __rt_final_exit
@@ -124,22 +126,22 @@ Image Symbol Table
     Symbol Name                              Value     Ov Type        Size  Object(Section)
 
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry4.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry5.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry7a.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry7b.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry8a.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry8b.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry9a.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry10a.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry9b.o ABSOLUTE
-    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry10b.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry11b.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry10b.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry8b.o ABSOLUTE
     ../clib/microlib/init/entry.s            0x00000000   Number         0  entry11a.o ABSOLUTE
-    ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  malloc2.o ABSOLUTE
-    ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  mallocr2.o ABSOLUTE
-    ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  malloca2.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry9b.o ABSOLUTE
+    ../clib/microlib/init/entry.s            0x00000000   Number         0  entry10a.o ABSOLUTE
     ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  mallocra2.o ABSOLUTE
+    ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  malloca2.o ABSOLUTE
+    ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  mallocr2.o ABSOLUTE
+    ../clib/microlib/malloc/malloc.c         0x00000000   Number         0  malloc2.o ABSOLUTE
     ../clib/microlib/malloc/mvars.c          0x00000000   Number         0  mvars.o ABSOLUTE
     ../clib/microlib/string/memcpy.c         0x00000000   Number         0  memcpyb.o ABSOLUTE
     ../clib/microlib/string/memcpy.c         0x00000000   Number         0  memcpya.o ABSOLUTE
@@ -208,34 +210,43 @@ Image Symbol Table
     SetSysClock                              0x08001db9   Thumb Code     8  system_stm32f10x.o(.text)
     .text                                    0x08001ec0   Section        0  draw.o(.text)
     .text                                    0x08001ec4   Section        0  motion.o(.text)
-    .text                                    0x0800252c   Section        0  usb.o(.text)
-    .text                                    0x08002530   Section        0  main.o(.text)
-    .text                                    0x08002784   Section        0  stm32f10x_it.o(.text)
-    .text                                    0x08002888   Section        0  memseta.o(.text)
-    .text                                    0x080028ac   Section       36  init.o(.text)
-    i.__free$2region                         0x080028d0   Section        0  malloc2.o(i.__free$2region)
-    i.__scatterload_copy                     0x08002920   Section       14  handlers.o(i.__scatterload_copy)
-    i.__scatterload_null                     0x0800292e   Section        2  handlers.o(i.__scatterload_null)
-    i.__scatterload_zeroinit                 0x08002930   Section       14  handlers.o(i.__scatterload_zeroinit)
-    .constdata                               0x0800293e   Section       13  motion.o(.constdata)
+    .text                                    0x08002814   Section        0  usb.o(.text)
+    .text                                    0x08002818   Section        0  main.o(.text)
+    .text                                    0x08002a8c   Section        0  stm32f10x_it.o(.text)
+    .text                                    0x08002ba4   Section        0  memseta.o(.text)
+    .text                                    0x08002bc8   Section       36  init.o(.text)
+    i.__free$2region                         0x08002bec   Section        0  malloc2.o(i.__free$2region)
+    i.__malloc$2region                       0x08002c3c   Section        0  malloc2.o(i.__malloc$2region)
+    i.__scatterload_copy                     0x08002ca8   Section       14  handlers.o(i.__scatterload_copy)
+    i.__scatterload_null                     0x08002cb6   Section        2  handlers.o(i.__scatterload_null)
+    i.__scatterload_zeroinit                 0x08002cb8   Section       14  handlers.o(i.__scatterload_zeroinit)
+    .constdata                               0x08002cc6   Section        3  motion.o(.constdata)
     .data                                    0x20000000   Section       20  stm32f10x_rcc.o(.data)
     APBAHBPrescTable                         0x20000000   Data          16  stm32f10x_rcc.o(.data)
     ADCPrescTable                            0x20000010   Data           4  stm32f10x_rcc.o(.data)
     .data                                    0x20000014   Section       20  system_stm32f10x.o(.data)
-    .data                                    0x20000028   Section       10  motion.o(.data)
+    .data                                    0x20000028   Section       24  motion.o(.data)
     staMotionDetectState                     0x20000028   Data           1  motion.o(.data)
     staAcceCommuIndex                        0x20000029   Data           1  motion.o(.data)
     staAcceCommuErrorCNT                     0x2000002c   Data           4  motion.o(.data)
-    staAcceCommuBusyWaitTime                 0x20000030   Data           2  motion.o(.data)
-    .data                                    0x20000034   Section       32  main.o(.data)
-    .data                                    0x20000054   Section        4  mvars.o(.data)
-    .bss                                     0x20000058   Section      408  motion.o(.bss)
-    staAcceCommuQueue                        0x20000058   Data         256  motion.o(.bss)
-    staAcceMasterTX_DMAInitStructure         0x20000158   Data          44  motion.o(.bss)
-    staAcceMasterRX_DMAInitStructure         0x20000184   Data          44  motion.o(.bss)
-    staAcceTXBUF                             0x200001b0   Data          32  motion.o(.bss)
-    staAcceRXBUF                             0x200001d0   Data          32  motion.o(.bss)
-    STACK                                    0x200001f0   Section     1024  startup_stm32f10x_md_arm.o(STACK)
+    staAcceRecvRawDataWalker                 0x20000030   Data           1  motion.o(.data)
+    staAcceCommuBusyWaitTime                 0x20000032   Data           2  motion.o(.data)
+    staAcceRecvRoundDataX                    0x20000034   Data           4  motion.o(.data)
+    staAcceRecvRoundDataY                    0x20000038   Data           4  motion.o(.data)
+    staAcceRecvRoundDataZ                    0x2000003c   Data           4  motion.o(.data)
+    .data                                    0x20000040   Section       32  main.o(.data)
+    .data                                    0x20000060   Section        4  mvars.o(.data)
+    .data                                    0x20000064   Section        4  mvars.o(.data)
+    .bss                                     0x20000068   Section      468  motion.o(.bss)
+    staAcceCommuQueue                        0x20000068   Data         256  motion.o(.bss)
+    staAcceMasterTX_DMAInitStructure         0x20000168   Data          44  motion.o(.bss)
+    staAcceMasterRX_DMAInitStructure         0x20000194   Data          44  motion.o(.bss)
+    staAcceTXBUF                             0x200001c0   Data          32  motion.o(.bss)
+    staAcceRXBUF                             0x200001e0   Data          32  motion.o(.bss)
+    staAcceRecvDawDataBufX                   0x20000200   Data          20  motion.o(.bss)
+    staAcceRecvDawDataBufY                   0x20000214   Data          20  motion.o(.bss)
+    staAcceRecvDawDataBufZ                   0x20000228   Data          20  motion.o(.bss)
+    STACK                                    0x20000240   Section     1024  startup_stm32f10x_md_arm.o(STACK)
 
     Global Symbols
 
@@ -478,7 +489,6 @@ Image Symbol Table
     TIM1_TRG_COM_IRQHandler                  0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
     TIM1_UP_IRQHandler                       0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
     TIM3_IRQHandler                          0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
-    TIM4_IRQHandler                          0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
     USART1_IRQHandler                        0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
     USART2_IRQHandler                        0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
     USART3_IRQHandler                        0x08001cdb   Thumb Code     0  startup_stm32f10x_md_arm.o(.text)
@@ -490,68 +500,77 @@ Image Symbol Table
     SystemCoreClockUpdate                    0x08001e0f   Thumb Code   142  system_stm32f10x.o(.text)
     ALL_LED_OFF                              0x08001ec1   Thumb Code     2  draw.o(.text)
     RedrawManager                            0x08001ec3   Thumb Code     2  draw.o(.text)
-    ACCE_MasterConfiguration                 0x08001ec5   Thumb Code   250  motion.o(.text)
-    AcceReadRX_DMAInitial                    0x08001fbf   Thumb Code    48  motion.o(.text)
-    AcceReadTX_DMAInitial                    0x08001fef   Thumb Code    54  motion.o(.text)
-    AcceWriteTX_DMAInitial                   0x08002025   Thumb Code    66  motion.o(.text)
-    AcceRead                                 0x08002067   Thumb Code    92  motion.o(.text)
-    AcceWrite                                0x080020c3   Thumb Code    66  motion.o(.text)
-    AcceQueueSlotSearch                      0x08002105   Thumb Code    86  motion.o(.text)
-    AcceQueueSlotFree                        0x0800215b   Thumb Code    66  motion.o(.text)
-    AcceQueueSlotInitial                     0x0800219d   Thumb Code    38  motion.o(.text)
-    HeapInitial                              0x080021c3   Thumb Code    14  motion.o(.text)
-    MotionStateInitial                       0x080021d1   Thumb Code     8  motion.o(.text)
-    AcceMasterBlastTX_Const                  0x080021d9   Thumb Code    74  motion.o(.text)
-    AcceDeviceConfig                         0x08002223   Thumb Code    18  motion.o(.text)
-    MotionManager                            0x08002235   Thumb Code   732  motion.o(.text)
-    USBManager                               0x0800252d   Thumb Code     2  usb.o(.text)
-    IWDG_Configuration                       0x08002531   Thumb Code    58  main.o(.text)
-    GLB_FreerunTIM_Initial                   0x0800256b   Thumb Code    50  main.o(.text)
-    GPIO_Configuration                       0x0800259d   Thumb Code   126  main.o(.text)
-    NVIC_Configuration                       0x0800261b   Thumb Code   106  main.o(.text)
-    RCC_Configuration                        0x08002685   Thumb Code    44  main.o(.text)
-    main                                     0x080026b1   Thumb Code   144  main.o(.text)
-    Occupy_Delay                             0x08002741   Thumb Code    18  main.o(.text)
-    memor                                    0x08002753   Thumb Code    22  main.o(.text)
-    NMI_Handler                              0x08002785   Thumb Code     2  stm32f10x_it.o(.text)
-    HardFault_Handler                        0x08002787   Thumb Code     4  stm32f10x_it.o(.text)
-    MemManage_Handler                        0x0800278b   Thumb Code     4  stm32f10x_it.o(.text)
-    BusFault_Handler                         0x0800278f   Thumb Code     4  stm32f10x_it.o(.text)
-    UsageFault_Handler                       0x08002793   Thumb Code     4  stm32f10x_it.o(.text)
-    SVC_Handler                              0x08002797   Thumb Code     2  stm32f10x_it.o(.text)
-    DebugMon_Handler                         0x08002799   Thumb Code     2  stm32f10x_it.o(.text)
-    PendSV_Handler                           0x0800279b   Thumb Code     2  stm32f10x_it.o(.text)
-    SysTick_Handler                          0x0800279d   Thumb Code    12  stm32f10x_it.o(.text)
-    DMA1_Channel3_IRQHandler                 0x080027a9   Thumb Code    98  stm32f10x_it.o(.text)
-    DMA1_Channel2_IRQHandler                 0x0800280b   Thumb Code    72  stm32f10x_it.o(.text)
-    TIM2_IRQHandler                          0x08002853   Thumb Code    32  stm32f10x_it.o(.text)
-    __aeabi_memset                           0x08002889   Thumb Code    14  memseta.o(.text)
-    __aeabi_memset4                          0x08002889   Thumb Code     0  memseta.o(.text)
-    __aeabi_memset8                          0x08002889   Thumb Code     0  memseta.o(.text)
-    __aeabi_memclr                           0x08002897   Thumb Code     4  memseta.o(.text)
-    __aeabi_memclr4                          0x08002897   Thumb Code     0  memseta.o(.text)
-    __aeabi_memclr8                          0x08002897   Thumb Code     0  memseta.o(.text)
-    _memset$wrapper                          0x0800289b   Thumb Code    18  memseta.o(.text)
-    __scatterload                            0x080028ad   Thumb Code    28  init.o(.text)
-    __scatterload_rt2                        0x080028ad   Thumb Code     0  init.o(.text)
-    free                                     0x080028d1   Thumb Code    76  malloc2.o(i.__free$2region)
-    __scatterload_copy                       0x08002921   Thumb Code    14  handlers.o(i.__scatterload_copy)
-    __scatterload_null                       0x0800292f   Thumb Code     2  handlers.o(i.__scatterload_null)
-    __scatterload_zeroinit                   0x08002931   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
-    BMA020_CONFIG_PARA                       0x0800293e   Data          13  motion.o(.constdata)
-    Region$$Table$$Base                      0x0800294c   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x0800296c   Number         0  anon$$obj.o(Region$$Table)
+    ACCE_MasterConfiguration                 0x08001ec5   Thumb Code   308  motion.o(.text)
+    AcceReadRX_DMAInitial                    0x08001ff9   Thumb Code    48  motion.o(.text)
+    AcceReadTX_DMAInitial                    0x08002029   Thumb Code    54  motion.o(.text)
+    AcceWriteTX_DMAInitial                   0x0800205f   Thumb Code    66  motion.o(.text)
+    AcceRead                                 0x080020a1   Thumb Code   100  motion.o(.text)
+    AcceWrite                                0x08002105   Thumb Code    66  motion.o(.text)
+    AcceQueueSlotSearch                      0x08002147   Thumb Code    86  motion.o(.text)
+    AcceQueueSlotFree                        0x0800219d   Thumb Code    66  motion.o(.text)
+    AcceQueueSlotInitial                     0x080021df   Thumb Code    42  motion.o(.text)
+    HeapInitial                              0x08002209   Thumb Code    14  motion.o(.text)
+    MotionStateInitial                       0x08002217   Thumb Code     8  motion.o(.text)
+    AcceMasterBlastTX_Const                  0x0800221f   Thumb Code    74  motion.o(.text)
+    AcceDeviceConfig                         0x08002269   Thumb Code    36  motion.o(.text)
+    MTN_NewRoutineDataReadRequest            0x0800228d   Thumb Code    60  motion.o(.text)
+    AcceRawDataRecv                          0x080022c9   Thumb Code   338  motion.o(.text)
+    getAcceMaxRawData                        0x0800241b   Thumb Code    36  motion.o(.text)
+    getAcceMinRawData                        0x0800243f   Thumb Code    36  motion.o(.text)
+    getAcceSumRawData                        0x08002463   Thumb Code    28  motion.o(.text)
+    getAcceRoundData                         0x0800247f   Thumb Code    40  motion.o(.text)
+    MotionManager                            0x080024a7   Thumb Code   852  motion.o(.text)
+    USBManager                               0x08002815   Thumb Code     2  usb.o(.text)
+    IWDG_Configuration                       0x08002819   Thumb Code    58  main.o(.text)
+    GLB_FreerunTIM_Initial                   0x08002853   Thumb Code    50  main.o(.text)
+    GPIO_Configuration                       0x08002885   Thumb Code   126  main.o(.text)
+    NVIC_Configuration                       0x08002903   Thumb Code   134  main.o(.text)
+    RCC_Configuration                        0x08002989   Thumb Code    44  main.o(.text)
+    main                                     0x080029b5   Thumb Code   146  main.o(.text)
+    Occupy_Delay                             0x08002a47   Thumb Code    18  main.o(.text)
+    memor                                    0x08002a59   Thumb Code    22  main.o(.text)
+    NMI_Handler                              0x08002a8d   Thumb Code     2  stm32f10x_it.o(.text)
+    HardFault_Handler                        0x08002a8f   Thumb Code     4  stm32f10x_it.o(.text)
+    MemManage_Handler                        0x08002a93   Thumb Code     4  stm32f10x_it.o(.text)
+    BusFault_Handler                         0x08002a97   Thumb Code     4  stm32f10x_it.o(.text)
+    UsageFault_Handler                       0x08002a9b   Thumb Code     4  stm32f10x_it.o(.text)
+    SVC_Handler                              0x08002a9f   Thumb Code     2  stm32f10x_it.o(.text)
+    DebugMon_Handler                         0x08002aa1   Thumb Code     2  stm32f10x_it.o(.text)
+    PendSV_Handler                           0x08002aa3   Thumb Code     2  stm32f10x_it.o(.text)
+    SysTick_Handler                          0x08002aa5   Thumb Code    12  stm32f10x_it.o(.text)
+    TIM2_IRQHandler                          0x08002ab1   Thumb Code    26  stm32f10x_it.o(.text)
+    TIM4_IRQHandler                          0x08002acb   Thumb Code    22  stm32f10x_it.o(.text)
+    DMA1_Channel3_IRQHandler                 0x08002ae1   Thumb Code    98  stm32f10x_it.o(.text)
+    DMA1_Channel2_IRQHandler                 0x08002b43   Thumb Code    72  stm32f10x_it.o(.text)
+    __aeabi_memset                           0x08002ba5   Thumb Code    14  memseta.o(.text)
+    __aeabi_memset4                          0x08002ba5   Thumb Code     0  memseta.o(.text)
+    __aeabi_memset8                          0x08002ba5   Thumb Code     0  memseta.o(.text)
+    __aeabi_memclr                           0x08002bb3   Thumb Code     4  memseta.o(.text)
+    __aeabi_memclr4                          0x08002bb3   Thumb Code     0  memseta.o(.text)
+    __aeabi_memclr8                          0x08002bb3   Thumb Code     0  memseta.o(.text)
+    _memset$wrapper                          0x08002bb7   Thumb Code    18  memseta.o(.text)
+    __scatterload                            0x08002bc9   Thumb Code    28  init.o(.text)
+    __scatterload_rt2                        0x08002bc9   Thumb Code     0  init.o(.text)
+    free                                     0x08002bed   Thumb Code    76  malloc2.o(i.__free$2region)
+    malloc                                   0x08002c3d   Thumb Code    92  malloc2.o(i.__malloc$2region)
+    __scatterload_copy                       0x08002ca9   Thumb Code    14  handlers.o(i.__scatterload_copy)
+    __scatterload_null                       0x08002cb7   Thumb Code     2  handlers.o(i.__scatterload_null)
+    __scatterload_zeroinit                   0x08002cb9   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
+    BMA020_CONFIG_PARA                       0x08002cc6   Data           3  motion.o(.constdata)
+    Region$$Table$$Base                      0x08002ccc   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x08002cec   Number         0  anon$$obj.o(Region$$Table)
     SystemCoreClock                          0x20000014   Data           4  system_stm32f10x.o(.data)
     AHBPrescTable                            0x20000018   Data          16  system_stm32f10x.o(.data)
-    gSystem_1ms_CNT                          0x20000034   Data           4  main.o(.data)
-    iFlagGlobalGeneralG01                    0x20000038   Data           4  main.o(.data)
-    iFlagMotionGeneralG01                    0x2000003c   Data           4  main.o(.data)
-    iFlagUSBGeneralG01                       0x20000040   Data           4  main.o(.data)
-    iFlagDrawGeneralG01                      0x20000044   Data           4  main.o(.data)
-    iFlagGlobalError                         0x20000048   Data           4  main.o(.data)
-    gEXTI_InitStructure                      0x2000004c   Data           8  main.o(.data)
-    __microlib_freelist                      0x20000054   Data           4  mvars.o(.data)
-    __initial_sp                             0x200005f0   Data           0  startup_stm32f10x_md_arm.o(STACK)
+    gSystem_1ms_CNT                          0x20000040   Data           4  main.o(.data)
+    iFlagGlobalGeneralG01                    0x20000044   Data           4  main.o(.data)
+    iFlagMotionGeneralG01                    0x20000048   Data           4  main.o(.data)
+    iFlagUSBGeneralG01                       0x2000004c   Data           4  main.o(.data)
+    iFlagDrawGeneralG01                      0x20000050   Data           4  main.o(.data)
+    iFlagGlobalError                         0x20000054   Data           4  main.o(.data)
+    gEXTI_InitStructure                      0x20000058   Data           8  main.o(.data)
+    __microlib_freelist                      0x20000060   Data           4  mvars.o(.data)
+    __microlib_freelist_initialised          0x20000064   Data           4  mvars.o(.data)
+    __initial_sp                             0x20000640   Data           0  startup_stm32f10x_md_arm.o(STACK)
     Image$$ARM_LIB_HEAP$$ZI$$Base            0x20003000   Number         0  anon$$obj.o(ARM_LIB_HEAP.bss)
     Image$$ARM_LIB_HEAP$$ZI$$Limit           0x20003200   Number         0  anon$$obj.o(ARM_LIB_HEAP.bss)
     Image$$ARM_LIB_STACK$$ZI$$Limit          0x20004000   Number         0  anon$$obj.o(ARM_LIB_STACK.bss)
@@ -564,9 +583,9 @@ Memory Map of the image
 
   Image Entry point : 0x080000ed
 
-  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x000029c4, Max: 0x00010000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00002d54, Max: 0x00010000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Base: 0x08000000, Size: 0x0000296c, Max: 0x00010000, ABSOLUTE)
+    Execution Region ER_IROM1 (Base: 0x08000000, Size: 0x00002cec, Max: 0x00010000, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -592,34 +611,36 @@ Memory Map of the image
     0x08001cc0   0x00000024   Code   RO          372    .text               startup_stm32f10x_md_arm.o
     0x08001ce4   0x000001dc   Code   RO          387    .text               system_stm32f10x.o
     0x08001ec0   0x00000004   Code   RO          405    .text               draw.o
-    0x08001ec4   0x00000668   Code   RO          437    .text               motion.o
-    0x0800252c   0x00000002   Code   RO          461    .text               usb.o
-    0x0800252e   0x00000002   PAD
-    0x08002530   0x00000254   Code   RO          476    .text               main.o
-    0x08002784   0x00000104   Code   RO          504    .text               stm32f10x_it.o
-    0x08002888   0x00000024   Code   RO          522    .text               mc_w.l(memseta.o)
-    0x080028ac   0x00000024   Code   RO          572    .text               mc_w.l(init.o)
-    0x080028d0   0x00000050   Code   RO          524    i.__free$2region    mc_w.l(malloc2.o)
-    0x08002920   0x0000000e   Code   RO          576    i.__scatterload_copy  mc_w.l(handlers.o)
-    0x0800292e   0x00000002   Code   RO          577    i.__scatterload_null  mc_w.l(handlers.o)
-    0x08002930   0x0000000e   Code   RO          578    i.__scatterload_zeroinit  mc_w.l(handlers.o)
-    0x0800293e   0x0000000d   Data   RO          439    .constdata          motion.o
-    0x0800294b   0x00000001   PAD
-    0x0800294c   0x00000020   Data   RO          574    Region$$Table       anon$$obj.o
+    0x08001ec4   0x00000950   Code   RO          437    .text               motion.o
+    0x08002814   0x00000002   Code   RO          461    .text               usb.o
+    0x08002816   0x00000002   PAD
+    0x08002818   0x00000274   Code   RO          476    .text               main.o
+    0x08002a8c   0x00000118   Code   RO          504    .text               stm32f10x_it.o
+    0x08002ba4   0x00000024   Code   RO          522    .text               mc_w.l(memseta.o)
+    0x08002bc8   0x00000024   Code   RO          572    .text               mc_w.l(init.o)
+    0x08002bec   0x00000050   Code   RO          524    i.__free$2region    mc_w.l(malloc2.o)
+    0x08002c3c   0x0000006c   Code   RO          525    i.__malloc$2region  mc_w.l(malloc2.o)
+    0x08002ca8   0x0000000e   Code   RO          576    i.__scatterload_copy  mc_w.l(handlers.o)
+    0x08002cb6   0x00000002   Code   RO          577    i.__scatterload_null  mc_w.l(handlers.o)
+    0x08002cb8   0x0000000e   Code   RO          578    i.__scatterload_zeroinit  mc_w.l(handlers.o)
+    0x08002cc6   0x00000003   Data   RO          439    .constdata          motion.o
+    0x08002cc9   0x00000003   PAD
+    0x08002ccc   0x00000020   Data   RO          574    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM1 (Base: 0x20000000, Size: 0x000005f0, Max: 0x00005000, ABSOLUTE)
+    Execution Region RW_IRAM1 (Base: 0x20000000, Size: 0x00000640, Max: 0x00005000, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
     0x20000000   0x00000014   Data   RW          284    .data               stm32f10x_rcc.o
     0x20000014   0x00000014   Data   RW          388    .data               system_stm32f10x.o
-    0x20000028   0x0000000a   Data   RW          440    .data               motion.o
-    0x20000032   0x00000002   PAD
-    0x20000034   0x00000020   Data   RW          477    .data               main.o
-    0x20000054   0x00000004   Data   RW          570    .data               mc_w.l(mvars.o)
-    0x20000058   0x00000198   Zero   RW          438    .bss                motion.o
-    0x200001f0   0x00000400   Zero   RW          369    STACK               startup_stm32f10x_md_arm.o
+    0x20000028   0x00000018   Data   RW          440    .data               motion.o
+    0x20000040   0x00000020   Data   RW          477    .data               main.o
+    0x20000060   0x00000004   Data   RW          570    .data               mc_w.l(mvars.o)
+    0x20000064   0x00000004   Data   RW          571    .data               mc_w.l(mvars.o)
+    0x20000068   0x000001d4   Zero   RW          438    .bss                motion.o
+    0x2000023c   0x00000004   PAD
+    0x20000240   0x00000400   Zero   RW          369    STACK               startup_stm32f10x_md_arm.o
 
 
     Execution Region ARM_LIB_HEAP (Base: 0x20003000, Size: 0x00000200, Max: 0x00000200, ABSOLUTE, UNINIT)
@@ -643,15 +664,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
 
-         4          0          0          0          0       3006   draw.o
-       596         28          0         32          0      17577   main.o
+         4          0          0          0          0       3146   draw.o
+       628         30          0         32          0      17609   main.o
        220         20          0          0          0     264861   misc.o
-      1640         98         13         10        408       6147   motion.o
+      2384        146          3         24        468       8804   motion.o
         36          8        236          0       1024        760   startup_stm32f10x_md_arm.o
         48          4          0          0          0        764   stm32f10x_dbgmcu.o
        592          8          0          0          0       4126   stm32f10x_dma.o
        856         40          0          0          0       5441   stm32f10x_gpio.o
-       260         22          0          0          0       1788   stm32f10x_it.o
+       280         26          0          0          0       1916   stm32f10x_it.o
         64          6          0          0          0       1173   stm32f10x_iwdg.o
        932         44          0         20          0       8528   stm32f10x_rcc.o
        780         14          0          0          0       6326   stm32f10x_spi.o
@@ -660,9 +681,9 @@ Image component sizes
          2          0          0          0          0        329   usb.o
 
     ----------------------------------------------------------------------
-     10120        416        282         84       2968     344357   Object Totals
+     10916        470        274         96       3032     347314   Object Totals
          0          0         32          0       1536          0   (incl. Generated)
-         4          0          1          2          0          0   (incl. Padding)
+         4          0          3          0          4          0   (incl. Padding)
 
     ----------------------------------------------------------------------
 
@@ -678,22 +699,22 @@ Image component sizes
          8          4          0          0          0          0   entry9a.o
         30          0          0          0          0          0   handlers.o
         36          8          0          0          0         68   init.o
-        80          4          0          0          0         76   malloc2.o
+       188         20          0          0          0        160   malloc2.o
         36          0          0          0          0        108   memseta.o
-         0          0          0          4          0          0   mvars.o
+         0          0          0          8          0          0   mvars.o
 
     ----------------------------------------------------------------------
-       202         20          0          4          0        252   Library Totals
+       310         36          0          8          0        336   Library Totals
          0          0          0          0          0          0   (incl. Padding)
 
     ----------------------------------------------------------------------
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Library Name
 
-       202         20          0          4          0        252   mc_w.l
+       310         36          0          8          0        336   mc_w.l
 
     ----------------------------------------------------------------------
-       202         20          0          4          0        252   Library Totals
+       310         36          0          8          0        336   Library Totals
 
     ----------------------------------------------------------------------
 
@@ -702,15 +723,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     10322        436        282         88       2968     343049   Grand Totals
-     10322        436        282         88       2968     343049   ELF Image Totals
-     10322        436        282         88          0          0   ROM Totals
+     11226        506        274        104       3032     346038   Grand Totals
+     11226        506        274        104       3032     346038   ELF Image Totals
+     11226        506        274        104          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                10604 (  10.36kB)
-    Total RW  Size (RW Data + ZI Data)              3056 (   2.98kB)
-    Total ROM Size (Code + RO Data + RW Data)      10692 (  10.44kB)
+    Total RO  Size (Code + RO Data)                11500 (  11.23kB)
+    Total RW  Size (RW Data + ZI Data)              3136 (   3.06kB)
+    Total ROM Size (Code + RO Data + RW Data)      11604 (  11.33kB)
 
 ==============================================================================
 

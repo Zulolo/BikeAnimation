@@ -34,9 +34,9 @@
 #define ACCE_MASTER_DMA_RX_IRQHandler	  	DMA1_Channel2_IRQHandler
 #define ACCE_MASTER_DMA_RX_IT_TC		    DMA1_IT_TC2
 #define ACCE_MASTER_DMA_RX_CHN			    DMA1_Channel2	// SPI1_RX DMA
-#define ACCE_MONITER_TIMER_IRQn				TIM2_IRQn
+#define ACCE_MONITOR_TIMER_IRQn				TIM2_IRQn
 #define PIC_REFRESH_TIMER_IRQn			    TIM4_IRQn
-#define ACCE_MONITER_TIMER 				    TIM2
+#define ACCE_MONITOR_TIMER 				    TIM2
 #define PIC_REFRESH_TIMER 				    TIM4
 #define GLB_FREERUN_TIMER 				    TIM3    // Without interrupt, evryone need to use this, divided into 1us per CNT
 
@@ -84,5 +84,6 @@ __GVAR EXTI_InitTypeDef   gEXTI_InitStructure;
 #define GET_GLOBAL_FREERUN_US   				TIM_GetCounter(GLB_FREERUN_TIMER)
 #define GLOBAL_FREERUN_US_WAITING(iStart, iMax)	(((uint16_t)((GET_GLOBAL_FREERUN_US) - (iStart))) < (iMax))		
 #define GLOBAL_FREERUN_US_TIMEOUT(iStart, iMax)	(((uint16_t)((GET_GLOBAL_FREERUN_US) - (iStart))) > (iMax))
+#define LOOP_WALKER_FORWARD(iWalker, iMax)		(((iWalker) < ((iMax) - 1)) ? ((iWalker)++) : ((iWalker) = 0))
 
 #endif

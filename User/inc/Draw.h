@@ -5,7 +5,6 @@
 #include "PicFlash.h"
 
 
-#define PIC_REFRESH_TIMER_CLK			RCC_APB1Periph_TIM2
 #define LED_WR_PORT_CLK         		RCC_APB2Periph_GPIOB
 #define LED_WR_PORT						GPIOB
 

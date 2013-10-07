@@ -23,7 +23,7 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f10x.c file
      */     
-
+	int16_t iTest;
 	// Config system 1ms clock
 	if (SysTick_Config(SystemCoreClock / 1000))
 	{ 
@@ -54,6 +54,8 @@ int main(void)
 	{
 
 	}
+
+	iTest = (int16_t)(((uint16_t)(0xC1 & 0x7F)) << 2);
 	IWDG_Configuration();
 
 	MotionStateInitial();
@@ -132,7 +134,7 @@ void RCC_Configuration(void)
 						   ACCE_MASTER_CLK | RCC_APB2Periph_AFIO, ENABLE);
 
 	/* Enable clock for TIM4 of SIG_IN, ... */
-	RCC_APB1PeriphClockCmd(PIC_REFRESH_TIMER_CLK | GLB_FREERUN_TIMER_CLK, ENABLE);
+	RCC_APB1PeriphClockCmd(ACCE_MONITOR_TIMER_CLK | PIC_REFRESH_TIMER_CLK | GLB_FREERUN_TIMER_CLK, ENABLE);
                       
 }
 
@@ -214,7 +216,7 @@ void NVIC_Configuration(void)
 	NVIC_Init(&NVIC_InitStructure);
 
 	/* Enable the TIM2_IRQn global Interrupt */
-	NVIC_InitStructure.NVIC_IRQChannel = ACCE_MONITER_TIMER_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannel = ACCE_MONITOR_TIMER_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;

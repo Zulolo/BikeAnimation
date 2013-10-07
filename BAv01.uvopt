@@ -193,19 +193,31 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>iTestRevBUF</ItemText>
+          <ItemText>staAcceRecvRoundDataX,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>staAcceRXBUF</ItemText>
+          <ItemText>staAcceRecvRoundDataY,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>staAcceTXBUF</ItemText>
+          <ItemText>staAcceRecvRoundDataZ,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>staAcceCommuErrorCNT</ItemText>
         </Ww>
       </WatchWindow1>
+      <MemoryWindow1>
+        <Mm>
+          <WinNumber>1</WinNumber>
+          <SubType>0</SubType>
+          <ItemText>0x20003000</ItemText>
+        </Mm>
+      </MemoryWindow1>
       <Tracepoint>
         <THDelay>0</THDelay>
       </Tracepoint>
@@ -237,12 +249,22 @@
       </DebugFlag>
       <LintExecutable></LintExecutable>
       <LintConfigFile></LintConfigFile>
+      <SystemViewers>
+        <Entry>
+          <Name>System Viewer\TIM2</Name>
+          <WinId>35904</WinId>
+        </Entry>
+        <Entry>
+          <Name>System Viewer\TIM3</Name>
+          <WinId>35905</WinId>
+        </Entry>
+      </SystemViewers>
     </TargetOption>
   </Target>
 
   <Group>
     <GroupName>Lib_src</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -286,8 +308,8 @@
       <Focus>0</Focus>
       <ColumnNumber>65</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>12</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./Lib/src/stm32f10x_bkp.c</PathWithFileName>
       <FilenameWithoutPath>stm32f10x_bkp.c</FilenameWithoutPath>
@@ -302,8 +324,8 @@
       <Focus>0</Focus>
       <ColumnNumber>50</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>400</TopLine>
-      <CurrentLine>445</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./Lib/src/stm32f10x_can.c</PathWithFileName>
       <FilenameWithoutPath>stm32f10x_can.c</FilenameWithoutPath>
@@ -478,8 +500,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>127</TopLine>
+      <CurrentLine>140</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./Lib/src/stm32f10x_iwdg.c</PathWithFileName>
       <FilenameWithoutPath>stm32f10x_iwdg.c</FilenameWithoutPath>
@@ -630,8 +652,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>120</TopLine>
+      <CurrentLine>133</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./Startup/startup_stm32f10x_md_arm.s</PathWithFileName>
       <FilenameWithoutPath>startup_stm32f10x_md_arm.s</FilenameWithoutPath>
@@ -694,8 +716,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>1</TopLine>
+      <CurrentLine>11</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./User/src/Draw.c</PathWithFileName>
       <FilenameWithoutPath>Draw.c</FilenameWithoutPath>
@@ -706,12 +728,12 @@
       <GroupNumber>4</GroupNumber>
       <FileNumber>28</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>270</TopLine>
-      <CurrentLine>309</CurrentLine>
+      <TopLine>385</TopLine>
+      <CurrentLine>386</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./User/src/Motion.c</PathWithFileName>
       <FilenameWithoutPath>Motion.c</FilenameWithoutPath>
@@ -726,8 +748,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>1</TopLine>
+      <CurrentLine>16</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./User/src/USB.c</PathWithFileName>
       <FilenameWithoutPath>USB.c</FilenameWithoutPath>
@@ -740,10 +762,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>52</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>126</TopLine>
-      <CurrentLine>150</CurrentLine>
+      <TopLine>46</TopLine>
+      <CurrentLine>59</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./User/src/main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
@@ -756,10 +778,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>32</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>104</TopLine>
-      <CurrentLine>125</CurrentLine>
+      <TopLine>147</TopLine>
+      <CurrentLine>180</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>./User/src/stm32f10x_it.c</PathWithFileName>
       <FilenameWithoutPath>stm32f10x_it.c</FilenameWithoutPath>

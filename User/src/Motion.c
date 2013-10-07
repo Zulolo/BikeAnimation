@@ -4,23 +4,23 @@
 void ACCE_MasterConfiguration(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
-	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 
     /* Time Base configuration */
-	TIM_Cmd(ACCE_MONITER_TIMER, DISABLE);
-	TIM_ITConfig(ACCE_MONITER_TIMER, TIM_IT_Update, DISABLE);
+	TIM_Cmd(ACCE_MONITOR_TIMER, DISABLE);
+	TIM_ITConfig(ACCE_MONITOR_TIMER, TIM_IT_Update, DISABLE);
 
-    TIM_TimeBaseStructure.TIM_Prescaler = ACCE_MONITER_TIMER_PRESCAL;
+    TIM_TimeBaseStructure.TIM_Prescaler = ACCE_MONITOR_TIMER_PRESCAL;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseStructure.TIM_Period = ACCE_MONITER_TIMER_PERIOD;
+    TIM_TimeBaseStructure.TIM_Period = ACCE_MONITOR_TIMER_PERIOD;
     TIM_TimeBaseStructure.TIM_ClockDivision = 0;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 
-    TIM_TimeBaseInit(ACCE_MONITER_TIMER, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit(ACCE_MONITOR_TIMER, &TIM_TimeBaseStructure);
 	// Enable timer to start routine acce data read after device config
 
-	/* LCD_SPI_MASTER configuration ------------------------------------------------------*/
-	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;	// Only TX
+	/* SPI_MASTER configuration ------------------------------------------------------*/
+	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;	// 
 	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;		// Master of course
 	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;	// 8bit format
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;		// High in idle
@@ -121,6 +121,8 @@ ENUM_OperationResult AcceRead(uint8_t iRegAddress, uint8_t iReadLength, uint8_t*
 	DMA_ITConfig(ACCE_MASTER_DMA_RX_CHN, DMA_IT_TC, ENABLE);
 	ACCE_MASTER_NSS_ENABLE;
 	FLAG_MOTION_ACCE_COMMU_BUSY = SET;
+	// Clear RXNE
+	SPI_I2S_ReceiveData(ACCE_MASTER_SPI);
 	DMA_Cmd(ACCE_MASTER_DMA_RX_CHN, ENABLE);
 	DMA_Cmd(ACCE_MASTER_DMA_TX_CHN, ENABLE);
 	return ACCEPTED;
@@ -202,6 +204,7 @@ void AcceQueueSlotInitial(void)
 {
 	uint8_t tempIndex;
 	staAcceCommuIndex = 0;	// Initial staAcceCommuIndex in acce commu queue to 0
+	staAcceRecvRawDataWalker = 0;
 	for (tempIndex = 0; tempIndex < ACCE_COMMU_QUEUE_LEN; tempIndex++)
 	{
 		(staAcceCommuQueue + tempIndex)->pRXBuf = NULL;
@@ -255,8 +258,8 @@ void AcceDeviceConfig(void)
 */
 	AcceMasterBlastTX_Const(BMA020_CONFIG_PARA, sizeof(BMA020_CONFIG_PARA));
 	// Enable timer to start routine acce data read after device config
-	TIM_Cmd(ACCE_MONITER_TIMER, ENABLE);
-	TIM_ITConfig(ACCE_MONITER_TIMER, TIM_IT_Update, ENABLE);
+	TIM_Cmd(ACCE_MONITOR_TIMER, ENABLE);
+	TIM_ITConfig(ACCE_MONITOR_TIMER, TIM_IT_Update, ENABLE);
 	staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
 }
 
@@ -272,7 +275,7 @@ ENUM_OperationResult MTN_NewRoutineDataReadRequest(void)
 	}
 	// Get pRecvContainer second to avoid free the allocated space
 	pRecvContainer = malloc(ACCE_ROUTINE_DATA_READ_LEN + 1);
-	if (NULL == pRevcContainer)
+	if (NULL == pRecvContainer)
 	{
 		return REFUSED;
 	}
@@ -282,7 +285,73 @@ ENUM_OperationResult MTN_NewRoutineDataReadRequest(void)
 	pTempAvailableQueueSlot->iRXAddress = ACCE_ROUTINE_DATA_READ_ADDR;
 	pTempAvailableQueueSlot->iRXBufLen = ACCE_ROUTINE_DATA_READ_LEN + 1;
 
-	return ACCEPTED
+	return ACCEPTED;
+}
+
+uint8_t AcceRawDataRecv(STR_AcceCommu strRecvRawDataSlot)
+{
+	if (TRUE == strRecvRawDataSlot.bCommuSuccess)
+	{
+		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_X_POS);
+		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Y_POS);
+		staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Z_POS);		
+	}
+	else
+	{
+		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = 0x8000;
+		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = 0x8000;
+		staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = 0x8000;
+	}
+	LOOP_WALKER_FORWARD(staAcceRecvRawDataWalker, ACCE_RECV_RAW_DATA_BUF_LEN);
+	return staAcceRecvRawDataWalker;
+}
+
+int16_t getAcceMaxRawData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
+{
+	uint8_t tempI;
+	int16_t iResult = *pInputRawDataArray;
+	for (tempI = 1; tempI < iInputRawDataLen; tempI++)
+	{
+		if (iResult < *(pInputRawDataArray + tempI))
+		{
+			iResult = *(pInputRawDataArray + tempI);
+		}
+	}
+	return iResult;
+}
+
+int16_t getAcceMinRawData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
+{
+	uint8_t tempI;
+	int16_t iResult = *pInputRawDataArray;
+	for (tempI = 1; tempI < iInputRawDataLen; tempI++)
+	{
+		if (iResult > *(pInputRawDataArray + tempI))
+		{
+			iResult = *(pInputRawDataArray + tempI);
+		}
+	}
+	return iResult;
+}
+
+int32_t getAcceSumRawData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
+{
+	uint8_t tempI;
+	int32_t iResult = 0;
+	for (tempI = 0; tempI < iInputRawDataLen; tempI++)
+	{
+		iResult += *(pInputRawDataArray + tempI);
+	}
+	return iResult;
+}
+
+int32_t getAcceRoundData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
+{
+	int16_t iMaxRawData;
+	int16_t iMinRawData;
+	iMaxRawData = getAcceMaxRawData(pInputRawDataArray, iInputRawDataLen);
+	iMinRawData = getAcceMinRawData(pInputRawDataArray, iInputRawDataLen);
+	return (getAcceSumRawData(pInputRawDataArray, iInputRawDataLen) - iMaxRawData - iMinRawData);
 }
 
 void MotionManager(void)
@@ -350,13 +419,13 @@ void MotionManager(void)
 		if (RESET == FLAG_MOTION_ACCE_COMMU_BUSY)
 		{
 			AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
-			ACCE_QUEUE_ROAMER_FORWARD;
+			LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
 			staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
 		}
 		else if (GLOBAL_FREERUN_US_TIMEOUT(staAcceCommuBusyWaitTime, ACCE_COMMU_TIMEOUT_US))
 		{
 			AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
-			ACCE_QUEUE_ROAMER_FORWARD;
+			LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
 			staAcceCommuErrorCNT++;
 			staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
 		}
@@ -394,16 +463,15 @@ void MotionManager(void)
 		break;
 
 	case MOTION_STATE_RX_DATA_PROCCESS:
-		if (TRUE == staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess)
+		if (0 == AcceRawDataRecv(staAcceCommuQueue[staAcceCommuIndex]))
 		{
-
-		}
-		else
-		{
-			
+			// Acce recv raw data buffer full (1ms passed)
+			staAcceRecvRoundDataX = getAcceRoundData(staAcceRecvDawDataBufX, sizeof(staAcceRecvDawDataBufX));
+			staAcceRecvRoundDataY = getAcceRoundData(staAcceRecvDawDataBufY, sizeof(staAcceRecvDawDataBufX));
+			staAcceRecvRoundDataZ = getAcceRoundData(staAcceRecvDawDataBufZ, sizeof(staAcceRecvDawDataBufX));
 		}
 		AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
-		ACCE_QUEUE_ROAMER_FORWARD;
+		LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
 		staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
 		break;
 

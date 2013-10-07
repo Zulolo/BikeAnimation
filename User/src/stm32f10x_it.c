@@ -127,17 +127,18 @@ void SysTick_Handler(void)
 /*  file (startup_stm32f10x_xx.s).                                            */
 /******************************************************************************/
 
-void ACCE_MONITER_TIMER_IRQ_HANDLER(void)
+void ACCE_MONITOR_TIMER_IRQ_HANDLER(void)
 {
-	if (TIM_GetITStatus(ACCE_MONITER_TIMER, TIM_IT_Update) != RESET)
+	if (TIM_GetITStatus(ACCE_MONITOR_TIMER, TIM_IT_Update) != RESET)
 	{
-		TIM_ClearITPendingBit(ACCE_MONITER_TIMER, TIM_IT_Update); 
+		TIM_ClearITPendingBit(ACCE_MONITOR_TIMER, TIM_IT_Update); 
 		MTN_NewRoutineDataReadRequest();
 	}
 }
 
 void PIC_REFRESH_TIMER_IRQ_HANDLER(void)
 {
+	// Max receiving time reached
 	if (TIM_GetITStatus(PIC_REFRESH_TIMER, TIM_IT_Update) != RESET)
 	{
 		TIM_ClearITPendingBit(PIC_REFRESH_TIMER, TIM_IT_Update); 
@@ -178,15 +179,7 @@ void ACCE_MASTER_DMA_RX_IRQHandler(void)
 	}	
 }
 
-void PIC_REFRESH_TIMER_IRQ_HANDLER(void)
-{
-	// Max receiving time reached
-	if (TIM_GetITStatus(PIC_REFRESH_TIMER, TIM_IT_Update) != RESET)
-	{
-		TIM_ClearITPendingBit(PIC_REFRESH_TIMER, TIM_IT_Update); 
-		TIM_Cmd(PIC_REFRESH_TIMER, DISABLE); 
-	}
-}
+
  
  
  
