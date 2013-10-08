@@ -22,13 +22,14 @@
 	#define ACCE_COMMU_BUSY_WAIT_MAX_US			20
 	#define ACCE_COMMU_TIMEOUT_US				50
 	#define ACCE_MONITOR_TIMER_PRESCAL			((SYSCLK_FREQ_72MHz / 1000000) - 1)		// Freerun TIM's frequency is at 1MHz (1us)
-	#define ACCE_MONITOR_TIMER_PERIOD			99	// 100us repeat
+	#define ACCE_MONITOR_TIMER_PERIOD			1999	// 2ms repeat, for 5r/s, 100 sample per circle
 	#define ACCE_ROUTINE_DATA_READ_ADDR			0x02
 	#define ACCE_ROUTINE_DATA_READ_LEN			6
-	#define ACCE_RECV_RAW_DATA_BUF_LEN			10
+	#define ACCE_RECV_RAW_DATA_BUF_LEN			500		// 500x2ms = record for 1s, min 6.9km/h
 	#define ACCE_RECV_RAW_DATA_X_POS			1
 	#define ACCE_RECV_RAW_DATA_Y_POS			3
 	#define ACCE_RECV_RAW_DATA_Z_POS			5
+	#define ACCE_ERROR_VALUE_INT16				0x8000
 	#define GET_ACCE_RAW_DATA_FROM_BUF(pRXBuf)	((((uint16_t)(*(pRXBuf))) >> 6) | \
 												(((uint16_t)((*((pRXBuf) + 1)) & 0x7F)) << 2) | \
 												((((*((pRXBuf) + 1)) & 0x80) > 0)?(0x7E00):(0x0000))| \
@@ -69,14 +70,14 @@
 	static uint32_t staAcceCommuErrorCNT = 0;
 	static int16_t staAcceRecvDawDataBufX[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	static int16_t staAcceRecvDawDataBufY[ACCE_RECV_RAW_DATA_BUF_LEN]; 
-	static int16_t staAcceRecvDawDataBufZ[ACCE_RECV_RAW_DATA_BUF_LEN]; 
+	//static int16_t staAcceRecvDawDataBufZ[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	static uint8_t staAcceRecvRawDataWalker = 0;
 	static int32_t staAcceRecvRoundDataX;
 	static int32_t staAcceRecvRoundDataY;
 	static int32_t staAcceRecvRoundDataZ;
 
 	const uint8_t BMA020_CONFIG_PARA[] = {
-		3, 0x14, 0x12 // +-8g, 100Hz
+		3, 0x14, 0x13 // +-8g, 188Hz
 	};
 #endif 
 

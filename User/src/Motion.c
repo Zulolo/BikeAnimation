@@ -294,13 +294,13 @@ uint8_t AcceRawDataRecv(STR_AcceCommu strRecvRawDataSlot)
 	{
 		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_X_POS);
 		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Y_POS);
-		staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Z_POS);		
+		//staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Z_POS);		
 	}
 	else
 	{
-		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = 0x8000;
-		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = 0x8000;
-		staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = 0x8000;
+		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
+		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
+		//staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
 	}
 	LOOP_WALKER_FORWARD(staAcceRecvRawDataWalker, ACCE_RECV_RAW_DATA_BUF_LEN);
 	return staAcceRecvRawDataWalker;
@@ -468,7 +468,7 @@ void MotionManager(void)
 			// Acce recv raw data buffer full (1ms passed)
 			staAcceRecvRoundDataX = getAcceRoundData(staAcceRecvDawDataBufX, sizeof(staAcceRecvDawDataBufX));
 			staAcceRecvRoundDataY = getAcceRoundData(staAcceRecvDawDataBufY, sizeof(staAcceRecvDawDataBufX));
-			staAcceRecvRoundDataZ = getAcceRoundData(staAcceRecvDawDataBufZ, sizeof(staAcceRecvDawDataBufX));
+			//staAcceRecvRoundDataZ = getAcceRoundData(staAcceRecvDawDataBufZ, sizeof(staAcceRecvDawDataBufX));
 		}
 		AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
 		LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
