@@ -292,14 +292,16 @@ uint8_t AcceRawDataRecv(STR_AcceCommu strRecvRawDataSlot)
 {
 	if (TRUE == strRecvRawDataSlot.bCommuSuccess)
 	{
-		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_X_POS);
-		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Y_POS);
+		*(pStaAcceRecvDawDataBufX + staAcceRecvRawDataWalker) = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_X_POS);
+		//staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_X_POS);
+		//staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Y_POS);
 		//staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_Z_POS);		
 	}
 	else
 	{
-		staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
-		staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
+		*(pStaAcceRecvDawDataBufX + staAcceRecvRawDataWalker) = (int16_t)GET_ACCE_RAW_DATA_FROM_BUF(strRecvRawDataSlot.pRXBuf + ACCE_RECV_RAW_DATA_X_POS);
+		//staAcceRecvDawDataBufX[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
+		//staAcceRecvDawDataBufY[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
 		//staAcceRecvDawDataBufZ[staAcceRecvRawDataWalker] = ACCE_ERROR_VALUE_INT16;
 	}
 	LOOP_WALKER_FORWARD(staAcceRecvRawDataWalker, ACCE_RECV_RAW_DATA_BUF_LEN);
@@ -354,9 +356,20 @@ int32_t getAcceRoundData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
 	return (getAcceSumRawData(pInputRawDataArray, iInputRawDataLen) - iMaxRawData - iMinRawData);
 }
 
+STR_AcceWVF_PV* getWaveformPeakOrValley(int16_t* pWaveformArrayEntr, uint16_t iWaveformArrayLength)
+{
+	static STR_AcceWVF_PV staAcceWVF_PV;
+
+	return &staAcceWVF_PV;
+}
+
 void MotionManager(void)
 {
 	static uint16_t staAcceCommuBusyWaitTime;
+	static STR_AcceWVF_PV staStrLastAcceRecvPV;
+	STR_AcceWVF_PV* pNewAcceRecvPV;
+	static uint8_t staNewAcceRecvPVNotFoundCNT;
+
 	switch (staMotionDetectState)
 	{
 	case MOTION_STATE_IDLE:
@@ -374,6 +387,9 @@ void MotionManager(void)
 			AcceQueueSlotInitial();
 			HeapInitial();
 			staMotionDetectState = MOTION_STATE_SLAVE_CONF;
+			pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_A;
+			staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
+			staNewAcceRecvPVNotFoundCNT = 0;
 
 		break;
 
@@ -465,9 +481,44 @@ void MotionManager(void)
 	case MOTION_STATE_RX_DATA_PROCCESS:
 		if (0 == AcceRawDataRecv(staAcceCommuQueue[staAcceCommuIndex]))
 		{
+			// First change buffer for receive data
+			if (staAcceRecvDawDataBufX_A == pStaAcceRecvDawDataBufX)
+			{
+				pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_B;
+				pNewAcceRecvPV = getWaveformPeakOrValley(staAcceRecvDawDataBufX_A, sizeof(staAcceRecvDawDataBufX_A));
+			}
+			else
+			{
+				pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_A;
+				pNewAcceRecvPV = getWaveformPeakOrValley(staAcceRecvDawDataBufX_B).sizeof(staAcceRecvDawDataBufX_B);
+			}
+			if (NULL == pNewAcceRecvPV)
+			{
+				staNewAcceRecvPVNotFoundCNT++;
+				if (NEW_ACCE_RECV_PV_NOT_FOUND_MAX == staNewAcceRecvPVNotFoundCNT)
+				{
+					staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
+				}
+			}
+			else
+			{
+				if (0 == staNewAcceRecvPVNotFoundCNT)
+				{
+					// No miss recognized peak or valley
+					// We can start to work
+				}
+				else
+				{	
+					// Last time didn't find peak or valley
+					staNewAcceRecvPVNotFoundCNT = 0;
+				}
+				memcpy(&staStrLastAcceRecvPV, pNewAcceRecvPV, sizeof(STR_AcceWVF_PV));
+
+			}
+			
 			// Acce recv raw data buffer full (1ms passed)
-			staAcceRecvRoundDataX = getAcceRoundData(staAcceRecvDawDataBufX, sizeof(staAcceRecvDawDataBufX));
-			staAcceRecvRoundDataY = getAcceRoundData(staAcceRecvDawDataBufY, sizeof(staAcceRecvDawDataBufX));
+			// staAcceRecvRoundDataX = getAcceRoundData(staAcceRecvDawDataBufX, sizeof(staAcceRecvDawDataBufX));
+			// staAcceRecvRoundDataY = getAcceRoundData(staAcceRecvDawDataBufY, sizeof(staAcceRecvDawDataBufX));
 			//staAcceRecvRoundDataZ = getAcceRoundData(staAcceRecvDawDataBufZ, sizeof(staAcceRecvDawDataBufX));
 		}
 		AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);

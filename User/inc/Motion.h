@@ -25,7 +25,11 @@
 	#define ACCE_MONITOR_TIMER_PERIOD			1999	// 2ms repeat, for 5r/s, 100 sample per circle
 	#define ACCE_ROUTINE_DATA_READ_ADDR			0x02
 	#define ACCE_ROUTINE_DATA_READ_LEN			6
-	#define ACCE_RECV_RAW_DATA_BUF_LEN			500		// 500x2ms = record for 1s, min 6.9km/h
+	#define ACCE_RECV_RAW_DATA_BUF_LEN			256		// 256x2ms = record for 0.5s, 
+														// during this 0.5s there must be one max or one min.
+														// Elsewise the LED will NOT be lite on
+	#define NEW_ACCE_RECV_PV_NOT_FOUND_MAX		4		// If no new acce peak or valley recognized during 0.5x4 = 2s, turn off all LEDs
+													
 	#define ACCE_RECV_RAW_DATA_X_POS			1
 	#define ACCE_RECV_RAW_DATA_Y_POS			3
 	#define ACCE_RECV_RAW_DATA_Z_POS			5
@@ -35,7 +39,9 @@
 												((((*((pRXBuf) + 1)) & 0x80) > 0)?(0x7E00):(0x0000))| \
 												(((uint16_t)((*((pRXBuf) + 1)) & 0x80)) << 8))
 
+
 	typedef enum {ACCE_CTRL_WR = 0, ACCE_CTRL_RD = !ACCE_CTRL_WR} ENUM_AcceCommuType;
+	typedef enum {ACCE_WVF_V = 0, ACCE_WVF_P = !ACCE_WVF_V} ENUM_AccePeakValley;
 
 	typedef enum {	
 		MOTION_STATE_IDLE = 0,
@@ -60,6 +66,12 @@
 		Boolean bCommuSuccess;
 	} STR_AcceCommu;
 
+	typedef struct
+	{
+		ENUM_AccePeakValley enumPeakValley;
+		uint32_t iSysTickTime;
+	} STR_AcceWVF_PV;
+
 	static STR_AcceCommu staAcceCommuQueue[ACCE_COMMU_QUEUE_LEN];
 	static DMA_InitTypeDef staAcceMasterTX_DMAInitStructure;
 	static DMA_InitTypeDef staAcceMasterRX_DMAInitStructure;
@@ -68,13 +80,15 @@
 	static ENUM_MotionDetectState staMotionDetectState = MOTION_STATE_IDLE; 
 	static uint8_t staAcceCommuIndex = 0;
 	static uint32_t staAcceCommuErrorCNT = 0;
-	static int16_t staAcceRecvDawDataBufX[ACCE_RECV_RAW_DATA_BUF_LEN]; 
-	static int16_t staAcceRecvDawDataBufY[ACCE_RECV_RAW_DATA_BUF_LEN]; 
+	static int16_t staAcceRecvDawDataBufX_A[ACCE_RECV_RAW_DATA_BUF_LEN]; 
+	static int16_t staAcceRecvDawDataBufX_B[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	//static int16_t staAcceRecvDawDataBufZ[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	static uint8_t staAcceRecvRawDataWalker = 0;
 	static int32_t staAcceRecvRoundDataX;
 	static int32_t staAcceRecvRoundDataY;
 	static int32_t staAcceRecvRoundDataZ;
+	static int16_t* pStaAcceRecvDawDataBufX;
+	static uint16_t staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
 
 	const uint8_t BMA020_CONFIG_PARA[] = {
 		3, 0x14, 0x13 // +-8g, 188Hz

@@ -45,6 +45,8 @@
 #define MSB_MASK_8BIT					    0x80
 #define MSB_FILTER_8BIT					    0x7F
 
+#define PIC_REFRESH_ALL_LED_OFF				0
+
 typedef enum {FALSE = 0, TRUE = !FALSE} Boolean;
 typedef enum {REFUSED = 0, ACCEPTED = !REFUSED} ENUM_OperationResult;
 typedef enum {FREE = 0, BUSY = !FREE} ENUM_BusStatus;
