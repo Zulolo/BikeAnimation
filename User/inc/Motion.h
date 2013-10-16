@@ -21,15 +21,16 @@
 	#define ACCE_COMMU_QUEUE_LEN				16
 	#define ACCE_COMMU_BUSY_WAIT_MAX_US			20
 	#define ACCE_COMMU_TIMEOUT_US				50
-	#define ACCE_MONITOR_TIMER_PRESCAL			((SYSCLK_FREQ_72MHz / 1000000) - 1)		// Freerun TIM's frequency is at 1MHz (1us)
-	#define ACCE_MONITOR_TIMER_PERIOD			1999	// 2ms repeat, for 5r/s, 100 sample per circle
-	#define ACCE_ROUTINE_DATA_READ_ADDR			0x02
-	#define ACCE_ROUTINE_DATA_READ_LEN			6
-	#define ACCE_RECV_RAW_DATA_BUF_LEN			256		// 256x2ms = record for 0.5s, 
-														// during this 0.5s there must be one max or one min.
-														// Elsewise the LED will NOT be lite on
+	#define ACCE_MONITOR_TIMER_FREQUENCY		1000000			
+	#define ACCE_MONITOR_TIMER_PRESCAL			((SYSCLK_FREQ_72MHz / ACCE_MONITOR_TIMER_FREQUENCY) - 1)		// Freerun TIM's frequency is at 1MHz (1us)
+	#define ACCE_MONITOR_SAMPLE_INTERVAL		2 		// 2ms
+	#define ACCE_MONITOR_TIMER_PERIOD			(((ACCE_MONITOR_SAMPLE_INTERVAL * ACCE_MONITOR_TIMER_FREQUENCY) / 1000) - 1)	// 2ms repeat, for 5r/s, 100 sample per circle
+	#define ACCE_RECV_RAW_DATA_BUF_TIME			100		// 100ms, if 100ms/r, it will be 68km/h, you can not ride so fast
+	#define ACCE_RECV_RAW_DATA_BUF_LEN			(ACCE_RECV_RAW_DATA_BUF_TIME / ACCE_MONITOR_SAMPLE_INTERVAL)		
+
 	#define NEW_ACCE_RECV_PV_NOT_FOUND_MAX		4		// If no new acce peak or valley recognized during 0.5x4 = 2s, turn off all LEDs
-													
+	#define ACCE_ROUTINE_DATA_READ_ADDR			0x02
+	#define ACCE_ROUTINE_DATA_READ_LEN			6													
 	#define ACCE_RECV_RAW_DATA_X_POS			1
 	#define ACCE_RECV_RAW_DATA_Y_POS			3
 	#define ACCE_RECV_RAW_DATA_Z_POS			5
