@@ -219,7 +219,7 @@ void HeapInitial(void)
 
 void MotionStateInitial(void)
 {
-	staMotionDetectState = MOTION_STATE_MASTER_CONF;
+	staMotionDetectState = MOTION_DETECT_MASTER_CONF;
 }
 
 ENUM_OperationResult AcceMasterBlastTX_Const(const uint8_t* pFormattedCMDStream, uint8_t iFormattedCMDStreamLen)
@@ -260,7 +260,7 @@ void AcceDeviceConfig(void)
 	// Enable timer to start routine acce data read after device config
 	TIM_Cmd(ACCE_MONITOR_TIMER, ENABLE);
 	TIM_ITConfig(ACCE_MONITOR_TIMER, TIM_IT_Update, ENABLE);
-	staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+	staMotionDetectState = MOTION_DETECT_TASK_DISPATCH;
 }
 
 ENUM_OperationResult MTN_NewRoutineDataReadRequest(void)
@@ -355,15 +355,32 @@ int32_t getAcceRoundData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
 	iMinRawData = getAcceMinRawData(pInputRawDataArray, iInputRawDataLen);
 	return (getAcceSumRawData(pInputRawDataArray, iInputRawDataLen) - iMaxRawData - iMinRawData);
 }
+int16_t* pConjunctRawDataArray(int16_t *pRawDataEntr, uint16_t iArrayIndex, uint16_t iBufferLength)
+{
+	if (iArrayIndex >= iBufferLength)
+	{
+		return NULL;
+	}
+	memcpy(staSequencyArray, pRawDataEntr + iArrayIndex, iBufferLength - iArrayIndex);
+	if (0 != iArrayIndex)
+	{
+		memcpy(staSequencyArray + iBufferLength - iArrayIndex, pRawDataEntr, iArrayIndex);
+	}
+	return staSequencyArray;
+}
 
-STR_AcceWVF_PV* getWaveformPeakOrValley(int16_t* pWaveformArrayEntr, uint16_t iWaveformArrayLength)
+STR_AcceWVF_PV* getWaveformPeakOrValley(int16_t* pWaveformArrayEntr, uint16_t iWaveformArrayIndex, uint16_t iWaveformArrayLength)
 {
 	static STR_AcceWVF_PV staAcceWVF_PV;
-
+	int16_t i
+	int16_t* pReConjuctedArray;
+	pReConjuctedArray = pConjunctRawDataArray(pWaveformArrayEntr, iWaveformArrayIndex, iWaveformArrayLength);
+	// This waveform array can only have less than one circle
+	getAcceMaxRawData(pReConjuctedArray, iWaveformArrayLength);
 	return &staAcceWVF_PV;
 }
 
-void MotionManager(void)
+void MotionDetectManager(void)
 {
 	static uint16_t staAcceCommuBusyWaitTime;
 	static STR_AcceWVF_PV staStrLastAcceRecvPV;
@@ -372,53 +389,53 @@ void MotionManager(void)
 
 	switch (staMotionDetectState)
 	{
-	case MOTION_STATE_IDLE:
+	case MOTION_DETECT_IDLE:
 
 		break;
 
-	case MOTION_STATE_MASTER_CONF:
+	case MOTION_DETECT_MASTER_CONF:
 			/* MCU periphery config ------------------------------------------------------*/
 			ACCE_MasterConfiguration();
-			staMotionDetectState = MOTION_STATE_MASTER_INIT;
+			staMotionDetectState = MOTION_DETECT_MASTER_INIT;
 		break;
 
-	case MOTION_STATE_MASTER_INIT:
+	case MOTION_DETECT_MASTER_INIT:
 			/* MCU queue slot and heap initial ------------------------------------------------------*/
 			AcceQueueSlotInitial();
 			HeapInitial();
-			staMotionDetectState = MOTION_STATE_SLAVE_CONF;
+			staMotionDetectState = MOTION_DETECT_SLAVE_CONF;
 			pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_A;
 			staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
 			staNewAcceRecvPVNotFoundCNT = 0;
 
 		break;
 
-	case MOTION_STATE_SLAVE_CONF:
+	case MOTION_DETECT_SLAVE_CONF:
 			AcceDeviceConfig();
 			// staMotionDetectState was changed in the routine of AcceDeviceConfig() because some device may need other state
 		break;
 
-	case MOTION_STATE_TASK_DISPATCH:
+	case MOTION_DETECT_TASK_DISPATCH:
 			if (NULL != staAcceCommuQueue[staAcceCommuIndex].pRXBuf)
 			{
 				staAcceCommuBusyWaitTime = GET_GLOBAL_FREERUN_US;
-				staMotionDetectState = MOTION_STATE_TRIGGER_RX;
+				staMotionDetectState = MOTION_DETECT_TRIGGER_RX;
 			}
 			else if (NULL != staAcceCommuQueue[staAcceCommuIndex].pTXBuf)
 			{
 				staAcceCommuBusyWaitTime = GET_GLOBAL_FREERUN_US;
-				staMotionDetectState = MOTION_STATE_TRIGGER_TX;
+				staMotionDetectState = MOTION_DETECT_TRIGGER_TX;
 			}
 			else
 			{
-				//staMotionDetectState = MOTION_STATE_IDLE;
+				//staMotionDetectState = MOTION_DETECT_IDLE;
 			}
 
 		break;
 
-	case MOTION_STATE_TRIGGER_TX:
+	case MOTION_DETECT_TRIGGER_TX:
 		while (FLAG_MOTION_ACCE_COMMU_BUSY && GLOBAL_FREERUN_US_WAITING(staAcceCommuBusyWaitTime, ACCE_COMMU_BUSY_WAIT_MAX_US))	
-		{	// Normally FLAG_MOTION_ACCE_COMMU_BUSY will only be busy in MOTION_STATE_TXING or MOTION_STATE_RXING state
+		{	// Normally FLAG_MOTION_ACCE_COMMU_BUSY will only be busy in MOTION_DETECT_TXING or MOTION_DETECT_RXING state
 		}
 		if (FLAG_MOTION_ACCE_COMMU_BUSY)
 		{
@@ -428,28 +445,28 @@ void MotionManager(void)
 		AcceWrite(staAcceCommuQueue[staAcceCommuIndex].pTXBuf, 
 				 staAcceCommuQueue[staAcceCommuIndex].iTXBufLen);
 		staAcceCommuBusyWaitTime = GET_GLOBAL_FREERUN_US;
-		staMotionDetectState = MOTION_STATE_TXING;
+		staMotionDetectState = MOTION_DETECT_TXING;
 		break;
 
-	case MOTION_STATE_TXING:
+	case MOTION_DETECT_TXING:
 		if (RESET == FLAG_MOTION_ACCE_COMMU_BUSY)
 		{
 			AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
 			LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
-			staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+			staMotionDetectState = MOTION_DETECT_TASK_DISPATCH;
 		}
 		else if (GLOBAL_FREERUN_US_TIMEOUT(staAcceCommuBusyWaitTime, ACCE_COMMU_TIMEOUT_US))
 		{
 			AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
 			LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
 			staAcceCommuErrorCNT++;
-			staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+			staMotionDetectState = MOTION_DETECT_TASK_DISPATCH;
 		}
 		break;
 
-	case MOTION_STATE_TRIGGER_RX:
+	case MOTION_DETECT_TRIGGER_RX:
 		while (FLAG_MOTION_ACCE_COMMU_BUSY && GLOBAL_FREERUN_US_WAITING(staAcceCommuBusyWaitTime, ACCE_COMMU_BUSY_WAIT_MAX_US))	
-		{	// Normally FLAG_MOTION_ACCE_COMMU_BUSY will only be busy in MOTION_STATE_TXING or MOTION_STATE_RXING state
+		{	// Normally FLAG_MOTION_ACCE_COMMU_BUSY will only be busy in MOTION_DETECT_TXING or MOTION_DETECT_RXING state
 		}
 		if (FLAG_MOTION_ACCE_COMMU_BUSY)
 		{
@@ -460,25 +477,31 @@ void MotionManager(void)
 				 staAcceCommuQueue[staAcceCommuIndex].iRXBufLen - 1,
 				 staAcceCommuQueue[staAcceCommuIndex].pRXBuf);
 		staAcceCommuBusyWaitTime = GET_GLOBAL_FREERUN_US;
-		staMotionDetectState = MOTION_STATE_RXING;
+		staMotionDetectState = MOTION_DETECT_RXING;
 		break;
 
-	case MOTION_STATE_RXING:
+	case MOTION_DETECT_RXING:
 		if (RESET == FLAG_MOTION_ACCE_COMMU_BUSY)
 		{
 			staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess = TRUE;
-			staMotionDetectState = MOTION_STATE_RX_DATA_PROCCESS;
+			staMotionDetectState = MOTION_DETECT_RX_DATA_PROCCESS;
 		}
 		else if (GLOBAL_FREERUN_US_TIMEOUT(staAcceCommuBusyWaitTime, ACCE_COMMU_TIMEOUT_US))
 		{
 			staAcceCommuQueue[staAcceCommuIndex].bCommuSuccess = FALSE;
 			staAcceCommuErrorCNT++;
-			staMotionDetectState = MOTION_STATE_RX_DATA_PROCCESS;
+			staMotionDetectState = MOTION_DETECT_RX_DATA_PROCCESS;
 		}
 
 		break;
 
-	case MOTION_STATE_RX_DATA_PROCCESS:
+	case MOTION_DETECT_RX_DATA_PROCCESS:
+		if (IS_TIME_TO_PROCESS_DATA(staAcceCommuIndex))
+		{
+			pConjunctRawDataArray(staAcceRecvDawDataBufX, staAcceCommuIndex, ACCE_RECV_RAW_DATA_BUF_LEN);
+			FLAG_MOTION_ACCE_DATA_PROCESS = SET;
+		}
+		/*
 		if (0 == AcceRawDataRecv(staAcceCommuQueue[staAcceCommuIndex]))
 		{
 			// First change buffer for receive data
@@ -520,13 +543,36 @@ void MotionManager(void)
 			// staAcceRecvRoundDataX = getAcceRoundData(staAcceRecvDawDataBufX, sizeof(staAcceRecvDawDataBufX));
 			// staAcceRecvRoundDataY = getAcceRoundData(staAcceRecvDawDataBufY, sizeof(staAcceRecvDawDataBufX));
 			//staAcceRecvRoundDataZ = getAcceRoundData(staAcceRecvDawDataBufZ, sizeof(staAcceRecvDawDataBufX));
-		}
+		}*/
+		// Free and move forward of task queue
 		AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
 		LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
-		staMotionDetectState = MOTION_STATE_TASK_DISPATCH;
+		staMotionDetectState = MOTION_DETECT_TASK_DISPATCH;
 		break;
 
 		default :
 		break;
 	}
+}
+
+void MotionProcessManager(void)
+{
+	switch (staMotionProcessState)
+	{
+	case MOTION_PROCESS_IDLE:
+		if (SET == FLAG_MOTION_ACCE_DATA_PROCESS)
+		{
+			staMotionProcessState = MOTION_PROCESSING_STEP_I;
+		}
+		break;
+
+	case MOTION_PROCESSING_STEP_I:
+
+		break;
+}
+
+void MotionManager(void)
+{
+	MotionDetectManager();
+	MotionProcessManager();
 }

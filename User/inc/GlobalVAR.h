@@ -69,6 +69,7 @@ __GVAR uint32_t iFlagGlobalGeneralG01;
 
 __GVAR uint32_t iFlagMotionGeneralG01;
 #define FLAG_MOTION_ACCE_COMMU_BUSY				BITBAND_V(iFlagMotionGeneralG01, 0)	
+#define FLAG_MOTION_ACCE_DATA_PROCESS			BITBAND_V(iFlagMotionGeneralG01, 1)	
 
 __GVAR uint32_t iFlagUSBGeneralG01;		   	
 

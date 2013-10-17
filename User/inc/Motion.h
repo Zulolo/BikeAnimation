@@ -35,27 +35,36 @@
 	#define ACCE_RECV_RAW_DATA_Y_POS			3
 	#define ACCE_RECV_RAW_DATA_Z_POS			5
 	#define ACCE_ERROR_VALUE_INT16				0x8000
-	#define GET_ACCE_RAW_DATA_FROM_BUF(pRXBuf)	((((uint16_t)(*(pRXBuf))) >> 6) | \
-												(((uint16_t)((*((pRXBuf) + 1)) & 0x7F)) << 2) | \
-												((((*((pRXBuf) + 1)) & 0x80) > 0)?(0x7E00):(0x0000))| \
-												(((uint16_t)((*((pRXBuf) + 1)) & 0x80)) << 8))
+
+	#define GET_ACCE_RAW_DATA_FROM_BUF(pRXBuf)		((((uint16_t)(*(pRXBuf))) >> 6) | \
+													(((uint16_t)((*((pRXBuf) + 1)) & 0x7F)) << 2) | \
+													 ((((*((pRXBuf) + 1)) & 0x80) > 0)?(0x7E00):(0x0000))| \
+													 (((uint16_t)((*((pRXBuf) + 1)) & 0x80)) << 8))
+	#define TIME_TO_PROCESS_DATA_MASK				0x07
+	#define IS_TIME_TO_PROCESS_DATA(iArrayIndex)	(((iArrayIndex) && TIME_TO_PROCESS_DATA_MASK) == 0) // process data each 2x8=16ms
 
 
 	typedef enum {ACCE_CTRL_WR = 0, ACCE_CTRL_RD = !ACCE_CTRL_WR} ENUM_AcceCommuType;
 	typedef enum {ACCE_WVF_V = 0, ACCE_WVF_P = !ACCE_WVF_V} ENUM_AccePeakValley;
 
 	typedef enum {	
-		MOTION_STATE_IDLE = 0,
-		MOTION_STATE_MASTER_CONF,	// MCU periphery config
-		MOTION_STATE_MASTER_INIT,	// MCU queue slot and heap initial
-		MOTION_STATE_SLAVE_CONF,	// Acce parameter config
-		MOTION_STATE_TASK_DISPATCH,	// Dispatch task to TX or RX trigger from task queue
-		MOTION_STATE_TRIGGER_TX,	// 
-		MOTION_STATE_TXING,
-		MOTION_STATE_TRIGGER_RX,
-		MOTION_STATE_RXING,
-		MOTION_STATE_RX_DATA_PROCCESS
+		MOTION_DETECT_IDLE = 0,
+		MOTION_DETECT_MASTER_CONF,	// MCU periphery config
+		MOTION_DETECT_MASTER_INIT,	// MCU queue slot and heap initial
+		MOTION_DETECT_SLAVE_CONF,	// Acce parameter config
+		MOTION_DETECT_TASK_DISPATCH,	// Dispatch task to TX or RX trigger from task queue
+		MOTION_DETECT_TRIGGER_TX,	// 
+		MOTION_DETECT_TXING,
+		MOTION_DETECT_TRIGGER_RX,
+		MOTION_DETECT_RXING,
+		MOTION_DETECT_RX_DATA_PROCCESS
 	} ENUM_MotionDetectState;
+
+	typedef enum {	
+		MOTION_PROCESS_IDLE = 0,
+		MOTION_PROCESSING_STEP_I
+
+	} ENUM_MotionProcessState;
 
 	typedef struct
 	{
@@ -78,11 +87,12 @@
 	static DMA_InitTypeDef staAcceMasterRX_DMAInitStructure;
 	static uint8_t staAcceTXBUF[ACCE_TXRX_BUF_LEN_MAX];
 	static uint8_t staAcceRXBUF[ACCE_TXRX_BUF_LEN_MAX];
-	static ENUM_MotionDetectState staMotionDetectState = MOTION_STATE_IDLE; 
+	static ENUM_MotionDetectState staMotionDetectState = MOTION_DETECT_IDLE; 
+	static ENUM_MotionProcessState staMotionProcessState = MOTION_PROCESS_IDLE; 
 	static uint8_t staAcceCommuIndex = 0;
 	static uint32_t staAcceCommuErrorCNT = 0;
-	static int16_t staAcceRecvDawDataBufX_A[ACCE_RECV_RAW_DATA_BUF_LEN]; 
-	static int16_t staAcceRecvDawDataBufX_B[ACCE_RECV_RAW_DATA_BUF_LEN]; 
+	static int16_t staAcceRecvDawDataBufX[ACCE_RECV_RAW_DATA_BUF_LEN]; 
+	static int16_t staSequencedRawDataBuf[ACCE_RECV_RAW_DATA_BUF_LEN];
 	//static int16_t staAcceRecvDawDataBufZ[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	static uint8_t staAcceRecvRawDataWalker = 0;
 	static int32_t staAcceRecvRoundDataX;
@@ -90,6 +100,7 @@
 	static int32_t staAcceRecvRoundDataZ;
 	static int16_t* pStaAcceRecvDawDataBufX;
 	static uint16_t staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
+	
 
 	const uint8_t BMA020_CONFIG_PARA[] = {
 		3, 0x14, 0x13 // +-8g, 188Hz
