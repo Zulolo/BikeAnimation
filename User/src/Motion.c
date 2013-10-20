@@ -369,17 +369,6 @@ int16_t* pConjunctRawDataArray(int16_t *pRawDataEntr, uint16_t iArrayIndex, uint
 	return staSequencyArray;
 }
 
-STR_AcceWVF_PV* getWaveformPeakOrValley(int16_t* pWaveformArrayEntr, uint16_t iWaveformArrayIndex, uint16_t iWaveformArrayLength)
-{
-	static STR_AcceWVF_PV staAcceWVF_PV;
-	int16_t i
-	int16_t* pReConjuctedArray;
-	pReConjuctedArray = pConjunctRawDataArray(pWaveformArrayEntr, iWaveformArrayIndex, iWaveformArrayLength);
-	// This waveform array can only have less than one circle
-	getAcceMaxRawData(pReConjuctedArray, iWaveformArrayLength);
-	return &staAcceWVF_PV;
-}
-
 void MotionDetectManager(void)
 {
 	static uint16_t staAcceCommuBusyWaitTime;
@@ -555,8 +544,65 @@ void MotionDetectManager(void)
 	}
 }
 
+int8_t* getDigitalizedData(int8_t* pDestinDataBuf, int16_t* pSourceDataBuf, 
+						   uint8_t iDigitalizedDataBufLen, int8_t iStartUpSeed)
+{
+	uint8_t iTempIndex;
+	*pDestinDataBuf = iStartUpSeed;
+	for (iTempIndex = 1; iTempIndex < iDigitalizedDataBufLen; iTempIndex++)
+	{
+		if (*(pSourceDataBuf + iTempIndex) > *(pSourceDataBuf + iTempIndex - 1))
+		{
+			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1) + 1
+		}
+		else if ((*(pSourceDataBuf + iTempIndex) < *(pSourceDataBuf + iTempIndex - 1)))
+		{
+			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1) - 1
+		}
+		else
+		{
+			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1)
+		}
+	}
+	return pDestinDataBuf;
+}
+
+uint32_t* getEqualBitArray(uint32_t* pDestinBitArray, int8_t* pSourceDataBuf, 
+						   int8_t iEqualData, uint8_t iBitArrayLen, uint8_t iDigitalizedDataBufLen) 
+{
+	uint8_t iTempIndex;
+	uint8_t iTempArrayIndex;
+	uint8_t iTempBitIndex;
+	// Clear the destiny buffer
+	memset(pDestinBitArray, NULL, iBitArrayLen);
+
+	for (iTempIndex = 0; iTempIndex < iDigitalizedDataBufLen; iTempIndex++)
+	{
+		if (*(pSourceDataBuf + iTempIndex) == iEqualData)
+		{
+			iTempArrayIndex = iTempIndex / INT32_BIT_NUM;
+			iTempBitIndex = iTempIndex % INT32_BIT_NUM;
+			SET_BIT_INDEX(*(pDestinBitArray + iTempArrayIndex), iTempBitIndex);
+		}
+	}
+	return pDestinBitArray;
+}
+
+STR_AcceWVF_PV getPeakOrValley(uint32_t* pPeakArray, uint32_t* pValleyArray, uint8_t iBitNum, 
+							   uint32_t iBufEndTime, uint32_t iBufIntervalTime)
+{
+
+	return strAcceWVF_PV;
+}
+
 void MotionProcessManager(void)
 {
+	static int8_t staDigitalizedDataBuf[ACCE_RECV_RAW_DATA_BUF_LEN];	// Limit of less than 128 length
+	static int8_t staDigitalizedDataMax;
+	static int8_t staDigitalizedDataMin;
+	static uint32_t staPeakArray[ACCE_PEAK_VALLEY_ARRAY_LEN];
+	static uint32_t staValleyArray[ACCE_PEAK_VALLEY_ARRAY_LEN];
+
 	switch (staMotionProcessState)
 	{
 	case MOTION_PROCESS_IDLE:
@@ -566,9 +612,31 @@ void MotionProcessManager(void)
 		}
 		break;
 
-	case MOTION_PROCESSING_STEP_I:
-
+	case MOTION_PROCESS_DIGITALIZE:
+		getDigitalizedData(staDigitalizedDataBuf, staSequencedRawDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN, 0);
 		break;
+
+	case MOTION_PROCESS_GET_DIGI_DATA_MAX:
+		staDigitalizedDataMax = (int8_t)(getAcceMaxRawData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN));
+		break;
+
+	case MOTION_PROCESS_GET_DIGI_DATA_MIN:
+		staDigitalizedDataMin = (int8_t)(getAcceMinRawData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN));
+		break;
+
+	case MOTION_PROCESS_GET_PEAK_BIT_ARRAY:
+		getEqualBitArray(staPeakArray, staDigitalizedDataBuf, staDigitalizedDataMax, ACCE_PEAK_VALLEY_ARRAY_LEN, ACCE_RECV_RAW_DATA_BUF_LEN);
+		break;
+
+	case MOTION_PROCESS_GET_VALLEY_BIT_ARRAY:
+		getEqualBitArray(staValleyArray, staDigitalizedDataBuf, staDigitalizedDataMin, ACCE_PEAK_VALLEY_ARRAY_LEN, ACCE_RECV_RAW_DATA_BUF_LEN);
+		break;
+
+	case MOTION_PROCESS_GET_PV:
+		break;
+
+	}
+
 }
 
 void MotionManager(void)

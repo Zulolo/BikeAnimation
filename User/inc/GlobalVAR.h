@@ -16,6 +16,7 @@
 
 #define SYSCLK_FREQ_72MHz               	72000000
 #define APB1CLK_FREQ_36MHz  		        36000000
+#define INT32_BIT_NUM						32
 
 #define ACCE_MASTER_PORT				    GPIOA
 #define ACCE_MASTER_NSS_PIN             	GPIO_Pin_4
@@ -46,6 +47,10 @@
 #define MSB_FILTER_8BIT					    0x7F
 
 #define PIC_REFRESH_ALL_LED_OFF				0
+
+#define SET_BIT_INDEX(iData, iBitPos)						((iData) = (iData) | (0x01 << (iBitPos)))
+#define GET_BIT_ARRAY_LEN(iDataBufLen, iUnitBitLen)			((0 == ((iDataBufLen) % (iUnitBitLen))) ? ((iDataBufLen) / (iUnitBitLen)) : ((iDataBufLen) / (iUnitBitLen) + 1))
+#define GET_BIT_ARRAY_LAST_BIT(iDataBufLen, iUnitBitLen)	((0 == ((iDataBufLen) % (iUnitBitLen))) ? (iUnitBitLen) : ((iDataBufLen) % (iUnitBitLen)))
 
 typedef enum {FALSE = 0, TRUE = !FALSE} Boolean;
 typedef enum {REFUSED = 0, ACCEPTED = !REFUSED} ENUM_OperationResult;
