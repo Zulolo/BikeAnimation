@@ -27,7 +27,7 @@
 	#define ACCE_MONITOR_TIMER_PERIOD				(((ACCE_MONITOR_SAMPLE_INTERVAL * ACCE_MONITOR_TIMER_FREQUENCY) / 1000) - 1)	// 2ms repeat, for 5r/s, 100 sample per circle
 	#define ACCE_RECV_RAW_DATA_BUF_TIME				100		// 100ms, if 100ms/r, it will be 68km/h, you can not ride so fast
 	#define ACCE_RECV_RAW_DATA_BUF_LEN				(ACCE_RECV_RAW_DATA_BUF_TIME / ACCE_MONITOR_SAMPLE_INTERVAL)
-	#define ACCE_PEAK_VALLEY_ARRAY_LEN				(GET_BIT_ARRAY_LEN(ACCE_RECV_RAW_DATA_BUF_LEN, INT32_BIT_NUM))
+	#define ACCE_PEAK_VALLEY_BIT_ARRAY_LEN			(GET_BIT_ARRAY_LEN(ACCE_RECV_RAW_DATA_BUF_LEN, INT32_BIT_NUM))
 	#define ACCE_PEAK_VALLEY_ARRAY_LAST_BIT			(GET_BIT_ARRAY_LAST_BIT(ACCE_RECV_RAW_DATA_BUF_LEN, INT32_BIT_NUM))
 
 	#define NEW_ACCE_RECV_PV_NOT_FOUND_MAX			4		// If no new acce peak or valley recognized during 0.5x4 = 2s, turn off all LEDs
@@ -38,13 +38,21 @@
 	#define ACCE_RECV_RAW_DATA_Z_POS				5
 	#define ACCE_ERROR_VALUE_INT16					0x8000
 
+	#define PV_BIT_FORBIDDEN_START_NUM				3
+	#define PV_BIT_FORBIDDEN_END_NUM				3
+	#define PV_BIT_ARRAY_START_MASK					0x07
+	#define PV_BIT_ARRAY_END_MASK					0x07
+	#define PV_BIT_ARRAY_AVERAGE_LEN_MAX			16				
+
+
 	#define GET_ACCE_RAW_DATA_FROM_BUF(pRXBuf)		((((uint16_t)(*(pRXBuf))) >> 6) | \
 													(((uint16_t)((*((pRXBuf) + 1)) & 0x7F)) << 2) | \
 													 ((((*((pRXBuf) + 1)) & 0x80) > 0)?(0x7E00):(0x0000))| \
 													 (((uint16_t)((*((pRXBuf) + 1)) & 0x80)) << 8))
 	#define TIME_TO_PROCESS_DATA_MASK				0x07
 	#define IS_TIME_TO_PROCESS_DATA(iArrayIndex)	(((iArrayIndex) && TIME_TO_PROCESS_DATA_MASK) == 0) // process data each 2x8=16ms
-
+	#define GET_PV_BIT_ARRAY_END_BITS(pArray, iBitNum)		((*(pArray + GET_BIT_ARRAY_LEN(iBitNum, INT32_BIT_NUM) - 1)) & \
+															(PV_BIT_ARRAY_END_MASK << (iBitNum % INT32_BIT_NUM - BIT_ARRAY_END_NUM)))
 
 	typedef enum {ACCE_CTRL_WR = 0, ACCE_CTRL_RD = !ACCE_CTRL_WR} ENUM_AcceCommuType;
 	typedef enum {ACCE_WVF_V = 0, ACCE_WVF_P = !ACCE_WVF_V} ENUM_AccePeakValley;
@@ -69,6 +77,8 @@
 		MOTION_PROCESS_GET_DIGI_DATA_MIN,
 		MOTION_PROCESS_GET_PEAK_BIT_ARRAY,
 		MOTION_PROCESS_GET_VALLEY_BIT_ARRAY,
+		MOTION_PROCESS_GET_PEAK,
+		MOTION_PROCESS_GET_VALLEY,
 		MOTION_PROCESS_GET_PV
 	} ENUM_MotionProcessState;
 
@@ -97,6 +107,7 @@
 	static ENUM_MotionProcessState staMotionProcessState = MOTION_PROCESS_IDLE; 
 	static uint8_t staAcceCommuIndex = 0;
 	static uint32_t staAcceCommuErrorCNT = 0;
+
 	static int16_t staAcceRecvDawDataBufX[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	static int16_t staSequencedRawDataBuf[ACCE_RECV_RAW_DATA_BUF_LEN];
 

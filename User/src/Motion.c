@@ -588,11 +588,146 @@ uint32_t* getEqualBitArray(uint32_t* pDestinBitArray, int8_t* pSourceDataBuf,
 	return pDestinBitArray;
 }
 
-STR_AcceWVF_PV getPeakOrValley(uint32_t* pPeakArray, uint32_t* pValleyArray, uint8_t iBitNum, 
+int16_t getFirstHighBitIndex(uint32_t* pBitArray, uint8_t iBitNum)
+{
+	uint8_t iTempUintIndex;
+	uint8_t iTempBitIndex;
+	uint8_t iUint32Num;
+	uint8_t iLastUint32BitNum;
+	iUint32Num = iBitNum / INT32_BIT_NUM;
+	iLastUint32BitNum = iBitNum % INT32_BIT_NUM;
+	// Only one Uint
+	if (0 == iUint32Num)
+	{
+		for (iTempBitIndex = 0; iTempBitIndex < iBitNum; iTempBitIndex++)
+		{
+			if (0 != GET_BIT_INDEX(*pBitArray, iTempBitIndex))
+			{
+				return iTempBitIndex;
+			}
+		}
+		return -1;
+	}
+
+	for (iTempUintIndex = 0; iTempUintIndex < iUint32Num; iTempUintIndex++)
+	{
+		for (iTempBitIndex = 0; iTempBitIndex < INT32_BIT_NUM; iTempBitIndex++)
+		{
+			if (0 != GET_BIT_INDEX(*(pBitArray + iTempUintIndex), iTempBitIndex)
+			{
+				return (iTempUintIndex * INT32_BIT_NUM + iTempBitIndex);
+			}
+		}
+	}
+
+	// Last Uint
+	if (0 != iLastUint32BitNum)
+	{
+		for (iTempBitIndex = 0; iTempBitIndex < iLastUint32BitNum; iTempBitIndex++)
+		{
+			if (0 != GET_BIT_INDEX(*(pBitArray + iUint32Num), iTempBitIndex))
+			{
+				return (iUint32Num * INT32_BIT_NUM + iTempBitIndex);
+			}
+		}
+	}
+	return -1;
+}
+
+int16_t getLastHighBitIndex(uint32_t* pBitArray, uint8_t iBitNum)
+{
+	uint8_t iTempUintIndex;
+	uint8_t iTempBitIndex;
+	uint8_t iUint32Num;
+	uint8_t iLastUint32BitNum;
+	iUint32Num = iBitNum / INT32_BIT_NUM;
+	iLastUint32BitNum = iBitNum % INT32_BIT_NUM;
+	// Only one Uint
+	if (0 == iUint32Num)
+	{
+		for (iTempBitIndex = iBitNum; iTempBitIndex >= 0; iTempBitIndex--)
+		{
+			if (0 != GET_BIT_INDEX(*pBitArray, iTempBitIndex))
+			{
+				return iTempBitIndex;
+			}
+		}
+		return -1;
+	}
+	// Last Uint
+	if (0 != iLastUint32BitNum)
+	{
+		for (iTempBitIndex = iLastUint32BitNum; iTempBitIndex >= 0; iTempBitIndex--)
+		{
+			if (0 != GET_BIT_INDEX(*(pBitArray + iUint32Num), iTempBitIndex))
+			{
+				return (iUint32Num * INT32_BIT_NUM + iTempBitIndex);
+			}
+		}
+	}
+	for (iTempUintIndex = iUint32Num - 1; iTempUintIndex >= 0; iTempUintIndex--)
+	{
+		for (iTempBitIndex = INT32_BIT_NUM - 1; iTempBitIndex >= 0; iTempBitIndex--)
+		{
+			if (0 != GET_BIT_INDEX(*(pBitArray + iTempUintIndex), iTempBitIndex)
+			{
+				return (iTempUintIndex * INT32_BIT_NUM + iTempBitIndex);
+			}
+		}
+	}
+	return -1;
+}
+
+int16_t getAverageHighBitPos(uint32_t* pBitArray, uint8_t iBitNum)
+{
+	int16_t iFirstHighBit, iLastHighBit;
+	iFirstHighBit = getFirstHighBitIndex(pBitArray, iBitNum);
+	iLastHighBit = getLastHighBitIndex(pBitArray, iBitNum);
+	if ((-1 == iLastHighBit) || (-1 == iFirstHighBit))
+	{
+		return -1;
+	}
+
+	if (iLastHighBit - iFirstHighBit > PV_BIT_ARRAY_AVERAGE_LEN_MAX)
+	{
+		return -1;
+	}
+
+	return ((iLastHighBit + iFirstHighBit) >> 1);
+}
+
+STR_AcceWVF_PV* getPeakOrValley(uint32_t* pPeakArray, uint32_t* pValleyArray, uint8_t iBitNum, 
 							   uint32_t iBufEndTime, uint32_t iBufIntervalTime)
 {
+	static STR_AcceWVF_PV staResult;
+	uint8_t iTempIndex;
 
-	return strAcceWVF_PV;
+	if (0 != (*pPeakArray & BIT_ARRAY_START_MASK))
+	{
+		// Peak is at left boundary
+		if (0 != GET_PV_BIT_ARRAY_END_BITS(pValleyArray, iBitNum))
+		{	// Valley is at right boundary
+			return NULL;
+		}		
+	}
+
+	if (0 != (*pValleyArray & BIT_ARRAY_START_MASK))
+	{
+		// Valley is at left boundary
+		if (0 != GET_PV_BIT_ARRAY_END_BITS(pPeakArray, iBitNum))
+		{	// Peak is at right boundary
+			return NULL;
+		}
+	}
+
+	// Search 
+	for (iTempIndex = PV_BIT_FORBIDDEN_START_NUM; iTempIndex < iBitNum - PV_BIT_FORBIDDEN_END_NUM; iTempIndex++)
+	{
+
+	}
+	return NULL;
+
+	return &staResult;
 }
 
 void MotionProcessManager(void)
@@ -600,41 +735,64 @@ void MotionProcessManager(void)
 	static int8_t staDigitalizedDataBuf[ACCE_RECV_RAW_DATA_BUF_LEN];	// Limit of less than 128 length
 	static int8_t staDigitalizedDataMax;
 	static int8_t staDigitalizedDataMin;
-	static uint32_t staPeakArray[ACCE_PEAK_VALLEY_ARRAY_LEN];
-	static uint32_t staValleyArray[ACCE_PEAK_VALLEY_ARRAY_LEN];
+	static uint32_t staPeakBitArray[ACCE_PEAK_VALLEY_BIT_ARRAY_LEN];
+	static uint32_t staValleyBitArray[ACCE_PEAK_VALLEY_BIT_ARRAY_LEN];
+	static int16_t staPeakAverage, staLalleyAverage;
 
 	switch (staMotionProcessState)
 	{
 	case MOTION_PROCESS_IDLE:
 		if (SET == FLAG_MOTION_ACCE_DATA_PROCESS)
 		{
-			staMotionProcessState = MOTION_PROCESSING_STEP_I;
+			FLAG_MOTION_ACCE_DATA_PROCESS = RESET;
+			staMotionProcessState = MOTION_PROCESS_DIGITALIZE;
 		}
 		break;
 
 	case MOTION_PROCESS_DIGITALIZE:
 		getDigitalizedData(staDigitalizedDataBuf, staSequencedRawDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN, 0);
+		staMotionProcessState = MOTION_PROCESS_GET_DIGI_DATA_MAX;
 		break;
 
 	case MOTION_PROCESS_GET_DIGI_DATA_MAX:
 		staDigitalizedDataMax = (int8_t)(getAcceMaxRawData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN));
+		staMotionProcessState = MOTION_PROCESS_GET_DIGI_DATA_MIN;
 		break;
 
 	case MOTION_PROCESS_GET_DIGI_DATA_MIN:
 		staDigitalizedDataMin = (int8_t)(getAcceMinRawData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN));
+		staMotionProcessState = MOTION_PROCESS_GET_PEAK_BIT_ARRAY;
 		break;
 
 	case MOTION_PROCESS_GET_PEAK_BIT_ARRAY:
-		getEqualBitArray(staPeakArray, staDigitalizedDataBuf, staDigitalizedDataMax, ACCE_PEAK_VALLEY_ARRAY_LEN, ACCE_RECV_RAW_DATA_BUF_LEN);
+		getEqualBitArray(staPeakBitArray, staDigitalizedDataBuf, staDigitalizedDataMax, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN, ACCE_RECV_RAW_DATA_BUF_LEN);
+		staMotionProcessState = MOTION_PROCESS_GET_VALLEY_BIT_ARRAY;
 		break;
 
 	case MOTION_PROCESS_GET_VALLEY_BIT_ARRAY:
-		getEqualBitArray(staValleyArray, staDigitalizedDataBuf, staDigitalizedDataMin, ACCE_PEAK_VALLEY_ARRAY_LEN, ACCE_RECV_RAW_DATA_BUF_LEN);
+		getEqualBitArray(staValleyBitArray, staDigitalizedDataBuf, staDigitalizedDataMin, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN, ACCE_RECV_RAW_DATA_BUF_LEN);
+		staMotionProcessState = MOTION_PROCESS_GET_PEAK;
 		break;
 
-	case MOTION_PROCESS_GET_PV:
+	case MOTION_PROCESS_GET_PEAK:
+		staPeakAverage = getAverageHighBitPos(staPeakBitArray, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN);
+		if (-1 == staPeakAverage)
+		{
+			staMotionProcessState = MOTION_PROCESS_IDLE;
+		}
+		else
+		{
+			staMotionProcessState = MOTION_PROCESS_GET_VALLEY;
+		}
 		break;
 
+	case MOTION_PROCESS_GET_VALLEY:
+		staLalleyAverage = getAverageHighBitPos(staValleyBitArray, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN);
+		break;
+
+	case case MOTION_PROCESS_GET_PV:
+
+		break;
 	}
 
 }
