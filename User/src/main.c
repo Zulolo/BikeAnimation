@@ -23,7 +23,7 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f10x.c file
      */     
-	int16_t iTest;
+
 	// Config system 1ms clock
 	if (SysTick_Config(SystemCoreClock / 1000))
 	{ 
@@ -55,7 +55,6 @@ int main(void)
 
 	}
 
-	iTest = (int16_t)(((uint16_t)(0xC1 & 0x7F)) << 2);
 	IWDG_Configuration();
 
 	MotionStateInitial();

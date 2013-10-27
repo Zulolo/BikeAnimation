@@ -55,7 +55,6 @@
 															(PV_BIT_ARRAY_END_MASK << (iBitNum % INT32_BIT_NUM - BIT_ARRAY_END_NUM)))
 
 	typedef enum {ACCE_CTRL_WR = 0, ACCE_CTRL_RD = !ACCE_CTRL_WR} ENUM_AcceCommuType;
-	typedef enum {ACCE_WVF_V = 0, ACCE_WVF_P = !ACCE_WVF_V} ENUM_AccePeakValley;
 
 	typedef enum {	
 		MOTION_DETECT_IDLE = 0,
@@ -85,18 +84,12 @@
 	typedef struct
 	{
 		uint8_t* pTXBuf;
+		uint8_t* pRXBuf;
 		uint8_t iTXBufLen;
 		uint8_t iRXAddress;
-		uint8_t* pRXBuf;
 		uint8_t iRXBufLen;
 		Boolean bCommuSuccess;
 	} STR_AcceCommu;
-
-	typedef struct
-	{
-		ENUM_AccePeakValley enumPeakValley;
-		uint32_t iSysTickTime;
-	} STR_AcceWVF_PV;
 
 	static STR_AcceCommu staAcceCommuQueue[ACCE_COMMU_QUEUE_LEN];
 	static DMA_InitTypeDef staAcceMasterTX_DMAInitStructure;
@@ -107,6 +100,8 @@
 	static ENUM_MotionProcessState staMotionProcessState = MOTION_PROCESS_IDLE; 
 	static uint8_t staAcceCommuIndex = 0;
 	static uint32_t staAcceCommuErrorCNT = 0;
+	static uint32_t staPeakAverageErrorCNT = 0;
+	static uint32_t staValleyAverageErrorCNT = 0;
 
 	static int16_t staAcceRecvDawDataBufX[ACCE_RECV_RAW_DATA_BUF_LEN]; 
 	static int16_t staSequencedRawDataBuf[ACCE_RECV_RAW_DATA_BUF_LEN];
@@ -118,9 +113,6 @@
 	//static int32_t staAcceRecvRoundDataZ;
 	static int16_t* pStaAcceRecvDawDataBufX;
 	static uint16_t staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
-
-	static STR_AcceWVF_PV staLastPeakOrValley;
-	static STR_AcceWVF_PV staThisPeakOrValley;	
 
 	const uint8_t BMA020_CONFIG_PARA[] = {
 		3, 0x14, 0x13 // +-8g, 188Hz

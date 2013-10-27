@@ -56,6 +56,14 @@
 typedef enum {FALSE = 0, TRUE = !FALSE} Boolean;
 typedef enum {REFUSED = 0, ACCEPTED = !REFUSED} ENUM_OperationResult;
 typedef enum {FREE = 0, BUSY = !FREE} ENUM_BusStatus;
+typedef enum {ACCE_WVF_V = 0, 
+	ACCE_WVF_P, 
+	ACCE_WVF_NONE} ENUM_AccePeakValley;
+typedef struct
+{
+	ENUM_AccePeakValley enumPeakValley;
+	uint32_t iSysTickTime;
+} STR_AcceWVF_PV;
 
 #define HEAP_BASE_SCT						0x20003000		// According to .sct file
 #define HEAP_SIZE							0x200
@@ -69,6 +77,9 @@ typedef enum {FREE = 0, BUSY = !FREE} ENUM_BusStatus;
 #define BITBAND_V(variable,bit)		      (*((volatile uint32_t*)(BITBAND_ADDRESS((uint32_t)(&(variable))) + ((bit) << 2))))
 
 __GVAR uint32_t gSystem_1ms_CNT;
+__GVAR STR_AcceWVF_PV strNewPeakOrValley;
+__GVAR uint32_t iPeakValleyNotFoundCNT;
+__GVAR uint32_t iRawDataRecvEndTime;
 
 __GVAR uint32_t iFlagGlobalGeneralG01;
 #define FLAG_HEAP_STATUS						BITBAND_V(iFlagGlobalGeneralG01, 0)	 
@@ -79,7 +90,8 @@ __GVAR uint32_t iFlagMotionGeneralG01;
 
 __GVAR uint32_t iFlagUSBGeneralG01;		   	
 
-__GVAR uint32_t iFlagDrawGeneralG01;		  
+__GVAR uint32_t iFlagDrawGeneralG01;	
+#define FLAG_NEW_PV_FOUND						BITBAND_V(iFlagDrawGeneralG01, 0)	
 
 __GVAR uint32_t iFlagGlobalError;		   	
 

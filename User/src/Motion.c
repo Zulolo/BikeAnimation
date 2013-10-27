@@ -232,7 +232,7 @@ ENUM_OperationResult AcceMasterBlastTX_Const(const uint8_t* pFormattedCMDStream,
 		{
 			return REFUSED;
 		}
-		pTempAvailableQueueSlot = AcceQueueSlotSearch(staAcceCommuQueue, sizeof(staAcceCommuQueue), staAcceCommuIndex);
+		pTempAvailableQueueSlot = AcceQueueSlotSearch(staAcceCommuQueue, sizeof(staAcceCommuQueue)/sizeof(staAcceCommuQueue[0]), staAcceCommuIndex);
 		if (NULL == pTempAvailableQueueSlot)
 		{
 			return REFUSED;
@@ -268,7 +268,7 @@ ENUM_OperationResult MTN_NewRoutineDataReadRequest(void)
 	uint8_t* pRecvContainer = NULL;
 	STR_AcceCommu* pTempAvailableQueueSlot = NULL;
 
-	pTempAvailableQueueSlot = AcceQueueSlotSearch(staAcceCommuQueue, sizeof(staAcceCommuQueue), staAcceCommuIndex);
+	pTempAvailableQueueSlot = AcceQueueSlotSearch(staAcceCommuQueue, sizeof(staAcceCommuQueue)/sizeof(staAcceCommuQueue[0]), staAcceCommuIndex);
 	if (NULL == pTempAvailableQueueSlot)
 	{
 		return REFUSED;
@@ -322,10 +322,38 @@ int16_t getAcceMaxRawData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
 	return iResult;
 }
 
+int8_t getInt8MaxData(int8_t* pInputRawDataArray, uint8_t iInputRawDataLen)
+{
+	uint8_t tempI;
+	int8_t iResult = *pInputRawDataArray;
+	for (tempI = 1; tempI < iInputRawDataLen; tempI++)
+	{
+		if (iResult < *(pInputRawDataArray + tempI))
+		{
+			iResult = *(pInputRawDataArray + tempI);
+		}
+	}
+	return iResult;
+}
+
 int16_t getAcceMinRawData(int16_t* pInputRawDataArray, uint8_t iInputRawDataLen)
 {
 	uint8_t tempI;
 	int16_t iResult = *pInputRawDataArray;
+	for (tempI = 1; tempI < iInputRawDataLen; tempI++)
+	{
+		if (iResult > *(pInputRawDataArray + tempI))
+		{
+			iResult = *(pInputRawDataArray + tempI);
+		}
+	}
+	return iResult;
+}
+
+int8_t getInt8MinData(int8_t* pInputRawDataArray, uint8_t iInputRawDataLen)
+{
+	uint8_t tempI;
+	int8_t iResult = *pInputRawDataArray;
 	for (tempI = 1; tempI < iInputRawDataLen; tempI++)
 	{
 		if (iResult > *(pInputRawDataArray + tempI))
@@ -361,20 +389,17 @@ int16_t* pConjunctRawDataArray(int16_t *pRawDataEntr, uint16_t iArrayIndex, uint
 	{
 		return NULL;
 	}
-	memcpy(staSequencyArray, pRawDataEntr + iArrayIndex, iBufferLength - iArrayIndex);
+	memcpy(staSequencedRawDataBuf, pRawDataEntr + iArrayIndex, iBufferLength - iArrayIndex);
 	if (0 != iArrayIndex)
 	{
-		memcpy(staSequencyArray + iBufferLength - iArrayIndex, pRawDataEntr, iArrayIndex);
+		memcpy(staSequencedRawDataBuf + iBufferLength - iArrayIndex, pRawDataEntr, iArrayIndex);
 	}
-	return staSequencyArray;
+	return staSequencedRawDataBuf;
 }
 
 void MotionDetectManager(void)
 {
 	static uint16_t staAcceCommuBusyWaitTime;
-	static STR_AcceWVF_PV staStrLastAcceRecvPV;
-	STR_AcceWVF_PV* pNewAcceRecvPV;
-	static uint8_t staNewAcceRecvPVNotFoundCNT;
 
 	switch (staMotionDetectState)
 	{
@@ -393,10 +418,9 @@ void MotionDetectManager(void)
 			AcceQueueSlotInitial();
 			HeapInitial();
 			staMotionDetectState = MOTION_DETECT_SLAVE_CONF;
-			pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_A;
+			pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX;
 			staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
-			staNewAcceRecvPVNotFoundCNT = 0;
-
+			iPeakValleyNotFoundCNT = 0;
 		break;
 
 	case MOTION_DETECT_SLAVE_CONF:
@@ -490,49 +514,7 @@ void MotionDetectManager(void)
 			pConjunctRawDataArray(staAcceRecvDawDataBufX, staAcceCommuIndex, ACCE_RECV_RAW_DATA_BUF_LEN);
 			FLAG_MOTION_ACCE_DATA_PROCESS = SET;
 		}
-		/*
-		if (0 == AcceRawDataRecv(staAcceCommuQueue[staAcceCommuIndex]))
-		{
-			// First change buffer for receive data
-			if (staAcceRecvDawDataBufX_A == pStaAcceRecvDawDataBufX)
-			{
-				pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_B;
-				pNewAcceRecvPV = getWaveformPeakOrValley(staAcceRecvDawDataBufX_A, sizeof(staAcceRecvDawDataBufX_A));
-			}
-			else
-			{
-				pStaAcceRecvDawDataBufX = staAcceRecvDawDataBufX_A;
-				pNewAcceRecvPV = getWaveformPeakOrValley(staAcceRecvDawDataBufX_B).sizeof(staAcceRecvDawDataBufX_B);
-			}
-			if (NULL == pNewAcceRecvPV)
-			{
-				staNewAcceRecvPVNotFoundCNT++;
-				if (NEW_ACCE_RECV_PV_NOT_FOUND_MAX == staNewAcceRecvPVNotFoundCNT)
-				{
-					staPicRefreshInterval = PIC_REFRESH_ALL_LED_OFF;
-				}
-			}
-			else
-			{
-				if (0 == staNewAcceRecvPVNotFoundCNT)
-				{
-					// No miss recognized peak or valley
-					// We can start to work
-				}
-				else
-				{	
-					// Last time didn't find peak or valley
-					staNewAcceRecvPVNotFoundCNT = 0;
-				}
-				memcpy(&staStrLastAcceRecvPV, pNewAcceRecvPV, sizeof(STR_AcceWVF_PV));
 
-			}
-			
-			// Acce recv raw data buffer full (1ms passed)
-			// staAcceRecvRoundDataX = getAcceRoundData(staAcceRecvDawDataBufX, sizeof(staAcceRecvDawDataBufX));
-			// staAcceRecvRoundDataY = getAcceRoundData(staAcceRecvDawDataBufY, sizeof(staAcceRecvDawDataBufX));
-			//staAcceRecvRoundDataZ = getAcceRoundData(staAcceRecvDawDataBufZ, sizeof(staAcceRecvDawDataBufX));
-		}*/
 		// Free and move forward of task queue
 		AcceQueueSlotFree(staAcceCommuQueue + staAcceCommuIndex);
 		LOOP_WALKER_FORWARD(staAcceCommuIndex, ACCE_COMMU_QUEUE_LEN);
@@ -553,15 +535,15 @@ int8_t* getDigitalizedData(int8_t* pDestinDataBuf, int16_t* pSourceDataBuf,
 	{
 		if (*(pSourceDataBuf + iTempIndex) > *(pSourceDataBuf + iTempIndex - 1))
 		{
-			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1) + 1
+			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1) + 1;
 		}
 		else if ((*(pSourceDataBuf + iTempIndex) < *(pSourceDataBuf + iTempIndex - 1)))
 		{
-			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1) - 1
+			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1) - 1;
 		}
 		else
 		{
-			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1)
+			*(pDestinDataBuf + iTempIndex) = *(pDestinDataBuf + iTempIndex - 1);
 		}
 	}
 	return pDestinDataBuf;
@@ -613,7 +595,7 @@ int16_t getFirstHighBitIndex(uint32_t* pBitArray, uint8_t iBitNum)
 	{
 		for (iTempBitIndex = 0; iTempBitIndex < INT32_BIT_NUM; iTempBitIndex++)
 		{
-			if (0 != GET_BIT_INDEX(*(pBitArray + iTempUintIndex), iTempBitIndex)
+			if (0 != GET_BIT_INDEX(*(pBitArray + iTempUintIndex), iTempBitIndex))
 			{
 				return (iTempUintIndex * INT32_BIT_NUM + iTempBitIndex);
 			}
@@ -636,8 +618,8 @@ int16_t getFirstHighBitIndex(uint32_t* pBitArray, uint8_t iBitNum)
 
 int16_t getLastHighBitIndex(uint32_t* pBitArray, uint8_t iBitNum)
 {
-	uint8_t iTempUintIndex;
-	uint8_t iTempBitIndex;
+	int16_t iTempUintIndex;
+	int16_t iTempBitIndex;
 	uint8_t iUint32Num;
 	uint8_t iLastUint32BitNum;
 	iUint32Num = iBitNum / INT32_BIT_NUM;
@@ -669,7 +651,7 @@ int16_t getLastHighBitIndex(uint32_t* pBitArray, uint8_t iBitNum)
 	{
 		for (iTempBitIndex = INT32_BIT_NUM - 1; iTempBitIndex >= 0; iTempBitIndex--)
 		{
-			if (0 != GET_BIT_INDEX(*(pBitArray + iTempUintIndex), iTempBitIndex)
+			if (0 != GET_BIT_INDEX(*(pBitArray + iTempUintIndex), iTempBitIndex))
 			{
 				return (iTempUintIndex * INT32_BIT_NUM + iTempBitIndex);
 			}
@@ -696,38 +678,40 @@ int16_t getAverageHighBitPos(uint32_t* pBitArray, uint8_t iBitNum)
 	return ((iLastHighBit + iFirstHighBit) >> 1);
 }
 
-STR_AcceWVF_PV* getPeakOrValley(uint32_t* pPeakArray, uint32_t* pValleyArray, uint8_t iBitNum, 
-							   uint32_t iBufEndTime, uint32_t iBufIntervalTime)
+STR_AcceWVF_PV* getPeakOrValley(uint8_t iPeakIndex, uint8_t iValleyIndex, uint8_t iBitArrayLen, 
+								uint8_t iIndexEndTime, uint8_t iIndexIntervalTime)
 {
 	static STR_AcceWVF_PV staResult;
-	uint8_t iTempIndex;
 
-	if (0 != (*pPeakArray & BIT_ARRAY_START_MASK))
+	if ((iPeakIndex < PV_BIT_FORBIDDEN_START_NUM) || (iPeakIndex > iBitArrayLen - PV_BIT_FORBIDDEN_END_NUM - 1))
 	{
-		// Peak is at left boundary
-		if (0 != GET_PV_BIT_ARRAY_END_BITS(pValleyArray, iBitNum))
-		{	// Valley is at right boundary
-			return NULL;
-		}		
-	}
-
-	if (0 != (*pValleyArray & BIT_ARRAY_START_MASK))
-	{
-		// Valley is at left boundary
-		if (0 != GET_PV_BIT_ARRAY_END_BITS(pPeakArray, iBitNum))
-		{	// Peak is at right boundary
+		if ((iValleyIndex < PV_BIT_FORBIDDEN_START_NUM) || (iValleyIndex > iBitArrayLen - PV_BIT_FORBIDDEN_END_NUM - 1))
+		{
 			return NULL;
 		}
+		else
+		{
+			staResult.enumPeakValley = ACCE_WVF_V;
+			staResult.iSysTickTime = iIndexEndTime - ((iBitArrayLen - iValleyIndex - 1) << 1);
+			return &staResult;
+		}
+		
 	}
 
-	// Search 
-	for (iTempIndex = PV_BIT_FORBIDDEN_START_NUM; iTempIndex < iBitNum - PV_BIT_FORBIDDEN_END_NUM; iTempIndex++)
+	if ((iValleyIndex < PV_BIT_FORBIDDEN_START_NUM) || (iValleyIndex > iBitArrayLen - PV_BIT_FORBIDDEN_END_NUM - 1))
 	{
-
+		if ((iPeakIndex < PV_BIT_FORBIDDEN_START_NUM) || (iPeakIndex > iBitArrayLen - PV_BIT_FORBIDDEN_END_NUM - 1))
+		{
+			return NULL;
+		}
+		else
+		{
+			staResult.enumPeakValley = ACCE_WVF_P;
+			staResult.iSysTickTime = iIndexEndTime - ((iBitArrayLen - iPeakIndex - 1) << 1);
+			return &staResult;
+		}
 	}
 	return NULL;
-
-	return &staResult;
 }
 
 void MotionProcessManager(void)
@@ -737,7 +721,8 @@ void MotionProcessManager(void)
 	static int8_t staDigitalizedDataMin;
 	static uint32_t staPeakBitArray[ACCE_PEAK_VALLEY_BIT_ARRAY_LEN];
 	static uint32_t staValleyBitArray[ACCE_PEAK_VALLEY_BIT_ARRAY_LEN];
-	static int16_t staPeakAverage, staLalleyAverage;
+	static int16_t staPeakAverage, staValleyAverage;
+	STR_AcceWVF_PV* newAccePV;
 
 	switch (staMotionProcessState)
 	{
@@ -755,12 +740,12 @@ void MotionProcessManager(void)
 		break;
 
 	case MOTION_PROCESS_GET_DIGI_DATA_MAX:
-		staDigitalizedDataMax = (int8_t)(getAcceMaxRawData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN));
+		staDigitalizedDataMax = getInt8MaxData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN);
 		staMotionProcessState = MOTION_PROCESS_GET_DIGI_DATA_MIN;
 		break;
 
 	case MOTION_PROCESS_GET_DIGI_DATA_MIN:
-		staDigitalizedDataMin = (int8_t)(getAcceMinRawData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN));
+		staDigitalizedDataMin = getInt8MinData(staDigitalizedDataBuf, ACCE_RECV_RAW_DATA_BUF_LEN);
 		staMotionProcessState = MOTION_PROCESS_GET_PEAK_BIT_ARRAY;
 		break;
 
@@ -778,6 +763,7 @@ void MotionProcessManager(void)
 		staPeakAverage = getAverageHighBitPos(staPeakBitArray, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN);
 		if (-1 == staPeakAverage)
 		{
+			staPeakAverageErrorCNT++;
 			staMotionProcessState = MOTION_PROCESS_IDLE;
 		}
 		else
@@ -787,11 +773,31 @@ void MotionProcessManager(void)
 		break;
 
 	case MOTION_PROCESS_GET_VALLEY:
-		staLalleyAverage = getAverageHighBitPos(staValleyBitArray, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN);
+		staValleyAverage = getAverageHighBitPos(staValleyBitArray, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN);
+		if (-1 == staValleyAverage)
+		{
+			staValleyAverageErrorCNT++;
+			staMotionProcessState = MOTION_PROCESS_IDLE;
+		}
+		else
+		{
+			staMotionProcessState = MOTION_PROCESS_GET_PV;
+		}
 		break;
 
-	case case MOTION_PROCESS_GET_PV:
-
+	case MOTION_PROCESS_GET_PV:
+		newAccePV = getPeakOrValley(staPeakAverage, staValleyAverage, ACCE_PEAK_VALLEY_BIT_ARRAY_LEN, 
+									iRawDataRecvEndTime, ACCE_MONITOR_SAMPLE_INTERVAL);
+		if (NULL == newAccePV)
+		{
+			iPeakValleyNotFoundCNT++;
+			staMotionProcessState = MOTION_PROCESS_IDLE;
+		}
+		else
+		{
+			memcpy(&strNewPeakOrValley, newAccePV, sizeof(STR_AcceWVF_PV));
+			FLAG_NEW_PV_FOUND = SET;
+		}
 		break;
 	}
 
